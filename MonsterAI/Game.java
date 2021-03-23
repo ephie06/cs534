@@ -97,6 +97,15 @@ class Game {
 		}
 		//System.out.println();
 	}
+	
+	// Return a bool based on whether any player reached 200 points
+	boolean gameOver() {
+		boolean flag = false;
+		for (int i = 0; i < playerOrder.size(); i++) {
+			if ( playerOrder.get(i).getPoints() >= 200) { flag = true; }
+		} return flag;
+	}
+	
 
 	// Return a bool based on whether the played card was valid or not
 	boolean checkRound (Card playedCard, int index) {
@@ -193,15 +202,15 @@ class Game {
 
 	// Print the person who is in the lead after this game
 	void printWinner() {
-		int smallestScore = playerOrder.get(0).getPoints();
+		int highestScore = playerOrder.get(0).getPoints();
 		int index = 0;
 		for (int i = 0; i < playerOrder.size(); i++) {
-			if (smallestScore > playerOrder.get(i).getPoints()) {
+			if (highestScore < playerOrder.get(i).getPoints()) {
 				index = i;
-				smallestScore = playerOrder.get(i).getPoints();
+				highestScore = playerOrder.get(i).getPoints();
 			}
 		}
-		System.out.println(playerOrder.get(index).getName() + " is in the lead after this round.\n");
+		System.out.println("\n" + playerOrder.get(index).getName() + " is in the lead after this round.\n");
 	}
 
 	// Print out how many points each player currently has between all games
@@ -261,6 +270,10 @@ class Game {
 		for(int d=0; d<undealt.size(); d++) {
 			undealt.get(d).printCard(); }
 		for (int i = 1; i < 19; i++) {
+//			if (gameOver()) {
+//				printWinner();
+//				break;
+//			}
 			System.out.println("--------------------------------------------");
 			System.out.println("Round #" +i+":");
 			System.out.println("--------------------------------------------");
@@ -334,6 +347,11 @@ class Game {
 					+ "and took " + points + " points this round.\n");
 				printPoints();
 			}
+			
+			if (gameOver()) {
+				printWinner();
+				break;
+			}
 
 			// FOR HUMAN PLAYERS AND DEBUG ONLY: Get round statistics and then flush
 //			if (debug) {
@@ -348,6 +366,7 @@ class Game {
 //	        	System.out.flush();
 //        	}
 		}
+		if (!gameOver()) {
 		//add points and zombies from the undealt cards to the winner of the last trick
 		int undealtPoints = undealtPoints();
 		int undealtZombies = countZombies(undealt);
@@ -364,10 +383,17 @@ class Game {
 			
 		}
 		
-		if (zArmy()) { System.out.println(playerOrder.get(zombieArmy()).getName() + " has a zombie army!\n"); }
 		
+		if (gameOver()) {
+			printWinner();
+		}
+		}
+		if (zArmy()) { System.out.println(playerOrder.get(zombieArmy()).getName() + " has a zombie army!\n"); }
 		printTotalPoints();
 		
+		
+		for (int i = 0; i < undealt.size(); i++) { cardsPlayed.restockDeck(undealt.get(i)); }
+		undealt.clear();
 
 //		// Check if someone shot the moon
 //		shotTheMoon();

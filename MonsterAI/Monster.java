@@ -14,18 +14,36 @@ public class Monster {
 		// thing.printDeck();
 
 		// Play Multiple Games
+//		int gameCount = 1;
+//		Game round = new Game(thing, p1, p2, p3);
+//		if (!round.gameOver()) { 
+//			round.playNewGame(); 
+//			System.out.println("\n--------------------------------------------");
+//			System.out.println("--------------------------------------------");
+//			System.out.println("--------------------------------------------");
+//			System.out.println("Playing Game #" + gameCount);
+//			System.out.println("--------------------------------------------");
+//			System.out.println("--------------------------------------------");
+//			System.out.println("--------------------------------------------\n");
+//			gameCount++;
+//			} else round.printWinner();
+			//round.playNewGame();
+//		}
+		
 		int numberOfGames = 1;
 		Game round = new Game(thing, p1, p2, p3);
-		for (int i = 1; i <= numberOfGames; i++) {
+		while (!round.gameOver()) {
 			System.out.println("\n--------------------------------------------");
 			System.out.println("--------------------------------------------");
 			System.out.println("--------------------------------------------");
-			System.out.println("Playing Game #"+i);
+			System.out.println("Playing Game #"+numberOfGames);
 			System.out.println("--------------------------------------------");
 			System.out.println("--------------------------------------------");
 			System.out.println("--------------------------------------------\n");
 			round.playNewGame();
+			numberOfGames++;
 		}
+		
 
 	}
 }
