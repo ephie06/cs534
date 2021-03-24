@@ -4,7 +4,7 @@ import java.util.Scanner;
 class Game {
 
 	boolean 			debug;					// set to true for debug if some player wishes for it
-	ArrayList<Player> 	playerOrder;			// think of this as a circular queue of the 4 players
+	ArrayList<Player> 	playerOrder;			// think of this as a circular queue of the 3 players
 	int 				firstPlayer;			// the index of the first player for this round
 	Deck 				cardsPlayed;			// cards that have already been played -- replace them into the deck
 	ArrayList<Card> 	currentRound;   		// cards currently played on the table
@@ -13,7 +13,7 @@ class Game {
 	ArrayList<Integer>  zombieCount;			// keep track of zombies players collect
 	Scanner 			in;						// For scanner input
 	String 				s;						// To store scanner input
-	boolean 			zArmy;				// Keep track so can only happen once per round
+	boolean 			zArmy;					// Keep track so can only happen once per round
 
 	// Every game must have three players and one deck!
 	// Note: This WILL NOT shuffle the deck or deal the cards here
@@ -53,8 +53,8 @@ class Game {
 		
 		// sort all hands
 		for (Player p : playerOrder) { p.sortHand(); }
-		// for (Player p : playerOrder) { p.printHand(); }		// for debugging to check all the hands are valid
-		// cardsPlayed.printDeck();								// for debugging to check all cards have been dealt
+		for (Player p : playerOrder) { p.printHand(); }		// for debugging to check all the hands are valid
+		cardsPlayed.printDeck();								// for debugging to check all cards have been dealt
 		// pick first player
 		firstPlayer = 0;
 		// print message to say who plays first
@@ -71,16 +71,7 @@ class Game {
 		zombieCount.add(0);
 		zombieCount.add(0);
 		zArmy = false;
-		// passing cards at start of game -- for now, no passing, but we would add it here
-		// passCards();
 
-		// flush the screen -- only for human players to debug
-		final String ANSI_CLS = "\u001b[2J";
-        final String ANSI_HOME = "\u001b[H";
-        System.out.println();
-       	System.out.print(ANSI_CLS + ANSI_HOME);
-       	System.out.println();
-        System.out.flush();
 	}
 
 	// Print the cards that were played so far this round
@@ -225,17 +216,6 @@ class Game {
 		}
 		System.out.println();
 	}
-	
-//	int zombieArmy() {
-//		int player = -1;
-//		for (int i = 0; i < zombieCount.size(); i++) {
-//			if (zombieCount.get(i) >= 12) { player = i; }
-//		} return player;
-//	}
-//	
-//	boolean zArmy() {
-//		return zombieArmy() >= 0;
-//	}
 
 	// Rnd-game functionality for zombie army
 	// subtracts 20 points from the other players for the round and game.
@@ -243,7 +223,7 @@ class Game {
 		int index = -1;
 		for (int i = 0; i < playerOrder.size(); i++) {
 			if (zombieCount.get(i) >= 12) {
-				System.out.println(playerOrder.get(i).getName() + " has a Zombie Army! Oppenents score -20");
+				System.out.println("\n" + playerOrder.get(i).getName() + " has a Zombie Army! Opponents score -20");
 				index = i;
 				zArmy = true; // stops from being called in subsequent tricks
 			}
@@ -265,17 +245,10 @@ class Game {
 		// We must call this to shuffle the deck and deal cards to all the players
 		initNewGame();
 		// For all 18 rounds of the game...
-		System.out.print("Undealt: ");
-		for(int d=0; d<undealt.size(); d++) {
-			undealt.get(d).printCard(); }
 		for (int i = 1; i < 19; i++) {
-//			if (gameOver()) {
-//				printWinner();
-//				break;
-//			}
-			System.out.println("--------------------------------------------");
-			System.out.println("Round #" +i+":");
-			System.out.println("--------------------------------------------");
+//			System.out.println("--------------------------------------------");
+//			System.out.println("Round #" +i+":");
+//			System.out.println("--------------------------------------------");
 			// clear the table for this round
 			currentRound.clear();
 			// go through actions for all three players (ordered based on firstPlayer)
@@ -307,19 +280,13 @@ class Game {
 				}
 
 				// Standard output message to notify what card was officially played
-				System.out.println(playerOrder.get(index).getName() + " played " + playedCard.printCard() + ".");
+//				System.out.println(playerOrder.get(index).getName() + " played " + playedCard.printCard() + ".");
 				// Add the played card to the currentRound (put the card on the table for all to see)
 				// BE CAREFUL! We will be adding a direct pointer to the card here!
 				currentRound.add(playedCard);
 				// Take the card that is played and add it back to the deck as well
 				cardsPlayed.restockDeck(playedCard);
-				// Flush the screen (this is just for convenience for human players)
-				final String ANSI_CLS = "\u001b[2J";
-        		final String ANSI_HOME = "\u001b[H";
-        		System.out.println();
-        		System.out.print(ANSI_CLS + ANSI_HOME);
-        		System.out.println();
-        		System.out.flush();
+
         		
 			}
 
@@ -353,52 +320,36 @@ class Game {
 				break;
 			}
 
-			// FOR HUMAN PLAYERS AND DEBUG ONLY: Get round statistics and then flush
-//			if (debug) {
-//				if (i < 13) System.out.println("Press ENTER to continue to the next round.");
-//				else System.out.println("PRESS ENTER TO END THIS GAME.");
-//			    s = in.nextLine();
-//				final String ANSI_CLS = "\u001b[2J";
-//	        	final String ANSI_HOME = "\u001b[H";
-//	        	System.out.println();
-//	        	System.out.print(ANSI_CLS + ANSI_HOME);
-//	        	System.out.println();
-//	        	System.out.flush();
-//        	}
 		}
 		if(!zArmy) { zombieArmy(); }
 		if (!gameOver()) {
-		//add points and zombies from the undealt cards to the winner of the last trick
-		int undealtPoints = undealtPoints();
-		int undealtZombies = countZombies(undealt);
-		playerScores.set(firstPlayer,playerScores.get(firstPlayer)+undealtPoints);
-		playerOrder.get(firstPlayer).addPoints(undealtPoints);
-		zombieCount.set(firstPlayer, zombieCount.get(firstPlayer)+undealtZombies);
+			//add points and zombies from the undealt cards to the winner of the last trick
+			int undealtPoints = undealtPoints();
+			int undealtZombies = countZombies(undealt);
+			playerScores.set(firstPlayer,playerScores.get(firstPlayer)+undealtPoints);
+			playerOrder.get(firstPlayer).addPoints(undealtPoints);
+			zombieCount.set(firstPlayer, zombieCount.get(firstPlayer)+undealtZombies);
 		
-		if (debug) {
-			System.out.println("\n" + playerOrder.get(firstPlayer).getName() + " won the last trick "
-				+ "and took " + undealtPoints + " points from the undealt cards.\n");
-			printPoints();
-			for (int i=0; i < zombieCount.size(); i++) { System.out.println("Player " + (i+1) + " has " 
-					+ zombieCount.get(i) + " zombies."); }
-			System.out.println();
-			
+			if (debug) {
+				System.out.println("\n" + playerOrder.get(firstPlayer).getName() + " won the last trick "
+						+ "and took " + undealtPoints + " points from the undealt cards.\n");
+				printPoints();
+				for (int i=0; i < zombieCount.size(); i++) { System.out.println("Player " + (i+1) + " has " 
+						+ zombieCount.get(i) + " zombies."); }
+				System.out.println();			
+			}
+				
+			if (gameOver()) {
+				printWinner();
+			}
 		}
-		
-		
-		if (gameOver()) {
-			printWinner();
-		}
-		}
-	//	if (zArmy()) { System.out.println(playerOrder.get(zombieArmy()).getName() + " has a zombie army!\n"); }
+
 		printTotalPoints();
-		
-		
+				
 		for (int i = 0; i < undealt.size(); i++) { cardsPlayed.restockDeck(undealt.get(i)); }
 		undealt.clear();
 
-//		// Check if someone shot the moon
-//		shotTheMoon();
+
 //		System.out.println("------------------------------------------");
 //		System.out.println("Game Summary:");
 //		System.out.println("------------------------------------------\n");
