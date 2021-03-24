@@ -13,6 +13,7 @@ class Game {
 	ArrayList<Integer>  zombieCount;			// keep track of zombies players collect
 	Scanner 			in;						// For scanner input
 	String 				s;						// To store scanner input
+	boolean 			zArmy;				// Keep track so can only happen once per round
 
 	// Every game must have three players and one deck!
 	// Note: This WILL NOT shuffle the deck or deal the cards here
@@ -30,6 +31,7 @@ class Game {
 		undealt = new ArrayList<Card>();
 		playerScores = new ArrayList<Integer>();
 		zombieCount = new ArrayList<Integer>();
+		zArmy = false;
 		in = new Scanner(System.in);
 	}
 
@@ -37,7 +39,7 @@ class Game {
 	void initNewGame () {
 		cardsPlayed.shuffleDeck();
 		// cardsPlayed.printDeck(); // debugging to make sure the deck is correct
-		// cardsPlayed.checkDeck(); // we need a way to check that all 52 cards are here correctly
+		// cardsPlayed.checkDeck(); // we need a way to check that all 60 cards are here correctly
 		// clear the hands of all the players (to make sure they're not holding anything already!)
 		for (Player p : playerOrder) { p.clearHand(); }
 		// pass out 18 cards each to the 3 players
@@ -53,7 +55,7 @@ class Game {
 		for (Player p : playerOrder) { p.sortHand(); }
 		// for (Player p : playerOrder) { p.printHand(); }		// for debugging to check all the hands are valid
 		// cardsPlayed.printDeck();								// for debugging to check all cards have been dealt
-		// pick first player (the one who holds the two of clubs)
+		// pick first player
 		firstPlayer = 0;
 		// print message to say who plays first
 		System.out.println(playerOrder.get(firstPlayer).getName() + " will play first.\n");
@@ -68,6 +70,7 @@ class Game {
 		zombieCount.add(0);
 		zombieCount.add(0);
 		zombieCount.add(0);
+		zArmy = false;
 		// passing cards at start of game -- for now, no passing, but we would add it here
 		// passCards();
 
@@ -210,7 +213,7 @@ class Game {
 				highestScore = playerOrder.get(i).getPoints();
 			}
 		}
-		System.out.println("\n" + playerOrder.get(index).getName() + " is in the lead after this round.\n");
+		System.out.println("\n" + playerOrder.get(index).getName() + " is the winner after this round.\n");
 	}
 
 	// Print out how many points each player currently has between all games
@@ -223,43 +226,39 @@ class Game {
 		System.out.println();
 	}
 	
-	int zombieArmy() {
-		int player = -1;
-		for (int i = 0; i < zombieCount.size(); i++) {
-			if (zombieCount.get(i) >= 12) { player = i; }
-		} return player;
-	}
-	
-	boolean zArmy() {
-		return zombieArmy() >= 0;
-	}
-
-//	// Rnd-game functionality for shooting the moon
-//	void shotTheMoon () {
-//		int index = -1;
-//		for (int i = 0; i < playerScores.size(); i++) {
-//			if (playerScores.get(i) == 26) {
-//				System.out.println(playerOrder.get(i).getName() + " shot the moon!");
-//				index = i;
-//			}
-//		}
-//		// Old Moon: Player does not gain points this round, all others gain 26 points
-//		if (index > -1) {
-//			for (int i = 0; i < playerOrder.size(); i++) {
-//				if (i != index) {
-//					playerOrder.get(i).addPoints(26);
-//					playerScores.set(i, 26);
-//				}
-//				// Remove the 26 points that this player received this round
-//				else {
-//					playerOrder.get(i).addPoints(-26);
-//					playerScores.set(i,0);
-//				}
-//			}
-//			if (playerOrder.get(index).getPoints() < 0)
-//				playerOrder.get(index).clearPlayer();
-//		}
+//	int zombieArmy() {
+//		int player = -1;
+//		for (int i = 0; i < zombieCount.size(); i++) {
+//			if (zombieCount.get(i) >= 12) { player = i; }
+//		} return player;
 //	}
+//	
+//	boolean zArmy() {
+//		return zombieArmy() >= 0;
+//	}
+
+	// Rnd-game functionality for zombie army
+	// subtracts 20 points from the other players for the round and game.
+	void zombieArmy () {
+		int index = -1;
+		for (int i = 0; i < playerOrder.size(); i++) {
+			if (zombieCount.get(i) >= 12) {
+				System.out.println(playerOrder.get(i).getName() + " has a Zombie Army! Oppenents score -20");
+				index = i;
+				zArmy = true; // stops from being called in subsequent tricks
+			}
+		}
+		
+		if (index > -1) {
+			for (int i = 0; i < playerOrder.size(); i++) {
+				if (i != index) {
+					playerOrder.get(i).addPoints(-20);
+					playerScores.set(i, playerScores.get(i)-20);
+				}
+				
+			}
+		}
+	}
 
 	// Call this whenever you want to start a completely new game and play through it
 	void playNewGame() {
@@ -283,8 +282,8 @@ class Game {
 			for (int j = 0; j < 3; j++) {
 				// use index to determine the index of the player currently playing
 				int index = (j+firstPlayer) % playerOrder.size();
-				if (debug)
-					printRound(firstPlayer); // for debugging: print the cards that were played this round
+//				if (debug)
+//					printRound(firstPlayer); // for debugging: print the cards that were played this round
 				boolean validPlay = false;
 				Card playedCard = null;
 
@@ -341,6 +340,7 @@ class Game {
 			//count zombies and add to taker
 			int zombies = countZombies(currentRound);
 			zombieCount.set(firstPlayer, zombieCount.get(firstPlayer)+zombies);
+			if (!zArmy) { zombieArmy(); }
 			
 			if (debug) {
 				System.out.println("\n" + playerOrder.get(firstPlayer).getName() + " played the highest card "
@@ -366,6 +366,7 @@ class Game {
 //	        	System.out.flush();
 //        	}
 		}
+		if(!zArmy) { zombieArmy(); }
 		if (!gameOver()) {
 		//add points and zombies from the undealt cards to the winner of the last trick
 		int undealtPoints = undealtPoints();
@@ -373,6 +374,7 @@ class Game {
 		playerScores.set(firstPlayer,playerScores.get(firstPlayer)+undealtPoints);
 		playerOrder.get(firstPlayer).addPoints(undealtPoints);
 		zombieCount.set(firstPlayer, zombieCount.get(firstPlayer)+undealtZombies);
+		
 		if (debug) {
 			System.out.println("\n" + playerOrder.get(firstPlayer).getName() + " won the last trick "
 				+ "and took " + undealtPoints + " points from the undealt cards.\n");
@@ -388,7 +390,7 @@ class Game {
 			printWinner();
 		}
 		}
-		if (zArmy()) { System.out.println(playerOrder.get(zombieArmy()).getName() + " has a zombie army!\n"); }
+	//	if (zArmy()) { System.out.println(playerOrder.get(zombieArmy()).getName() + " has a zombie army!\n"); }
 		printTotalPoints();
 		
 		
