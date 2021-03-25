@@ -16,7 +16,7 @@ public class Monster {
 		// Play Multiple Games
 		int numberOfGames = 1;
 		Game round = new Game(thing, p1, p2, p3);
-//		while (!round.gameOver()) {
+		while (!round.gameOver()) {
 			System.out.println("\n--------------------------------------------");
 			System.out.println("--------------------------------------------");
 			System.out.println("--------------------------------------------");
@@ -26,7 +26,8 @@ public class Monster {
 			System.out.println("--------------------------------------------\n");
 			round.playNewGame();
 			numberOfGames++;
-//		}
+		
+		}
 		
 
 	}

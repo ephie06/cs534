@@ -36,8 +36,11 @@ Random rng;
 		int numCards = range.getRange();
 		
 		if (firstSuit == Suit.UNICORNS) {
-			SuitRange roundRange = getSuitRange(Suit.UNICORNS, masterCopy.currentRound);
-			Value highest = masterCopy.currentRound.get(roundRange.endIndex-1).getValue();
+			Value highest = masterCopy.currentRound.get(0).getValue();
+			for (int j=0; j<masterCopy.currentRound.size(); j++) {
+				if (highest.compareTo(masterCopy.currentRound.get(j).getValue()) < 0 && masterCopy.currentRound.get(j).getSuit() == firstSuit)
+				{ highest = masterCopy.currentRound.get(j).getValue(); }
+			}
 			if(unicorns.getRange() != 0) {
 				for (int j=0; j<unicorns.getRange(); j++) {
 					if (highest.compareTo(hand.get(range.startIndex+j).getValue()) < 0 ) 
