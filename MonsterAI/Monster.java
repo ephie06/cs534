@@ -7,7 +7,7 @@ public class Monster {
 
 		// Assume this order is clockwise
 		Player p1 = new RandomPlayAI("Random1");
-		Player p2 = new RandomPlayAI("Random2");
+		Player p2 = new GDPlayer("GD Player");
 		Player p3 = new RandomPlayAI("Random3");
 
 		// at the end of every game, we will have all the cards back in the deck
@@ -16,7 +16,7 @@ public class Monster {
 		// Play Multiple Games
 		int numberOfGames = 1;
 		Game round = new Game(thing, p1, p2, p3);
-		while (!round.gameOver()) {
+//		while (!round.gameOver()) {
 			System.out.println("\n--------------------------------------------");
 			System.out.println("--------------------------------------------");
 			System.out.println("--------------------------------------------");
@@ -26,7 +26,7 @@ public class Monster {
 			System.out.println("--------------------------------------------\n");
 			round.playNewGame();
 			numberOfGames++;
-		}
+//		}
 		
 
 	}

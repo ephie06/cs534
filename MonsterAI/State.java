@@ -145,6 +145,7 @@ class State {
 		return taker % playerScores.size();
 	}
 
+
 	// Return -1 if a card that cannot be played is played
 	// On the controller side: first save the pointer to the card, then remove from the hand
 	// then check advance(), then if necessary, add card back to hand
@@ -207,5 +208,16 @@ class State {
 		// Return the amount of points that the player has received
 		return returnpoints;
 	}
+
+//	public Value findLargest() {
+//		Suit firstSuit = currentRound.get(0).getSuit();
+//		Value largestValue = currentRound.get(0).getValue();
+//		for (int i=0; i< currentRound.size(); i++) {
+//			if (largestValue.compareTo(currentRound.get(i).getValue()) < 0 && firstSuit == currentRound.get(i).getSuit()) {
+//				largestValue = currentRound.get(i).getValue();
+//			}
+//		}	return largestValue;	
+//	}
+
 
 }

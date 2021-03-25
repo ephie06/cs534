@@ -276,6 +276,7 @@ class Game {
 						System.out.println("This was an invalid play. Please pick a valid card.");
 						playerOrder.get(index).addToHand(playedCard);
 						playerOrder.get(index).sortHand();
+						//break;
 					}
 				}
 
@@ -329,6 +330,7 @@ class Game {
 			playerScores.set(firstPlayer,playerScores.get(firstPlayer)+undealtPoints);
 			playerOrder.get(firstPlayer).addPoints(undealtPoints);
 			zombieCount.set(firstPlayer, zombieCount.get(firstPlayer)+undealtZombies);
+			if(!zArmy) { zombieArmy(); }
 		
 			if (debug) {
 				System.out.println("\n" + playerOrder.get(firstPlayer).getName() + " won the last trick "
