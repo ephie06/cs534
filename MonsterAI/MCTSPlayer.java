@@ -168,7 +168,7 @@ class MCTSNode extends State {
 		totalValue += reward.get(playerIndex);
 		numObserved += 1;
 		if (parent!=null) {
-			backPropagation(reward);
+			parent.backPropagation(reward);
 		}
 	}
 	
@@ -183,15 +183,15 @@ class MCTSNode extends State {
 	public boolean equals(State obj) {
         if (this == obj) return true;
         if (obj == null) return false;
-        MCTSNode that = (MCTSNode) obj;
+        State that = obj;
         cardsPlayed.invertDeck.sort(null);
         that.cardsPlayed.invertDeck.sort(null);
-		return playerIndex == that.playerIndex
-				&& currentRound.equals(that.currentRound) 
-				&& playerScores.equals(that.playerScores)
-				&& cardsPlayed.invertDeck.equals(that.cardsPlayed.invertDeck); 
-				
-	}
+        return playerIndex == that.playerIndex
+                && currentRound.equals(that.currentRound)
+                && playerScores.equals(that.playerScores)
+                && cardsPlayed.invertDeck.equals(that.cardsPlayed.invertDeck);
+
+    }
 	
 }
 
