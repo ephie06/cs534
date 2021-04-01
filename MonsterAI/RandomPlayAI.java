@@ -9,7 +9,11 @@ class RandomPlayAI extends Player {
 
 	Random rng;
 	
-	RandomPlayAI(String name) { super(name); rng = new Random(); System.out.println("Random Play AI ("+name+") initialized.");  }
+	RandomPlayAI(String name) {
+		super(name);
+		rng = new Random();
+		//System.out.println("Random Play AI ("+name+") initialized.");  TODO: UNCOMMENT
+	}
 
 	boolean setDebug() { return false; }
 

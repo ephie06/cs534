@@ -19,7 +19,7 @@ class Game {
 	// Note: This WILL NOT shuffle the deck or deal the cards here
 	// We ONLY do that upon playing a new game
 	Game (Deck deck, Player p1, Player p2, Player p3) {
-		debug = true;
+		debug = false;
 		playerOrder = new ArrayList<Player>();
 		playerOrder.add(p1);
 		playerOrder.add(p2);
@@ -46,19 +46,20 @@ class Game {
 		for (int i = 0; i < 18; i++) { for (Player p : playerOrder) { p.addToHand ( cardsPlayed.drawTop() ); } }
 		//6 undealt cards
 		for(int i=0; i<6; i++) { undealt.add(cardsPlayed.drawTop()); }
-		System.out.print("Undealt: ");
+		//System.out.print("Undealt: "); TODO: UNCOMMENT
 		for(int i=0; i<undealt.size(); i++) {
-			System.out.print(undealt.get(i).printCard() + ", ");}
-		System.out.println();
+			//System.out.print(undealt.get(i).printCard() + ", "); TODO: UNCOMMENT
+		}
+		//System.out.println(); TODO: UNCOMMENT
 		
 		// sort all hands
 		for (Player p : playerOrder) { p.sortHand(); }
-		for (Player p : playerOrder) { p.printHand(); }		// for debugging to check all the hands are valid
+		//for (Player p : playerOrder) { p.printHand(); }		// for debugging to check all the hands are valid //TODO: UNCOMMENT
 		cardsPlayed.printDeck();								// for debugging to check all cards have been dealt
 		// pick first player
 		firstPlayer = 0;
 		// print message to say who plays first
-		System.out.println(playerOrder.get(firstPlayer).getName() + " will play first.\n");
+		//System.out.println(playerOrder.get(firstPlayer).getName() + " will play first.\n"); TODO: UNCOMMENT
 		// just to be safe, clear the arraylist of cards on the table
 		currentRound.clear();
 		// clear scores for this game
@@ -96,7 +97,7 @@ class Game {
 	boolean gameOver() {
 		boolean flag = false;
 		for (int i = 0; i < playerOrder.size(); i++) {
-			if ( playerOrder.get(i).getPoints() >= 200) { flag = true; }
+			if ( playerOrder.get(i).getPoints() >= 200) { flag = true; } //TODO: Change back to 200
 		} return flag;
 	}
 	
@@ -209,7 +210,7 @@ class Game {
 
 	// Print out how many points each player currently has between all games
 	void printTotalPoints() {
-		System.out.println("Total cumulative points between all games:");
+		System.out.println("Total cumulative points between all games for Thread " + Thread.currentThread().getId() + ":");
 		System.out.println("------------------------------------------");
 		for (Player p : playerOrder) {
 			System.out.println(p.getName() + " has " + p.getPoints() + " points.");
@@ -223,7 +224,7 @@ class Game {
 		int index = -1;
 		for (int i = 0; i < playerOrder.size(); i++) {
 			if (zombieCount.get(i) >= 12) {
-				System.out.println("\n" + playerOrder.get(i).getName() + " has a Zombie Army! Opponents score -20");
+				//System.out.println("\n" + playerOrder.get(i).getName() + " has a Zombie Army! Opponents score -20"); TODO: UNCOMMENT
 				index = i;
 				zArmy = true; // stops from being called in subsequent tricks
 			}
@@ -313,10 +314,11 @@ class Game {
 			if (debug) {
 				System.out.println("\n" + playerOrder.get(firstPlayer).getName() + " played the highest card "
 					+ "and took " + points + " points this round.\n");
-				printPoints();
+				//printPoints(); TODO: Uncomment
 			}
 			
 			if (gameOver()) {
+				printTotalPoints();
 				printWinner();
 				break;
 			}
@@ -335,18 +337,18 @@ class Game {
 			if (debug) {
 				System.out.println("\n" + playerOrder.get(firstPlayer).getName() + " won the last trick "
 						+ "and took " + undealtPoints + " points from the undealt cards.\n");
-				printPoints();
+				//printPoints(); TODO:Uncomment
 				for (int i=0; i < zombieCount.size(); i++) { System.out.println("Player " + (i+1) + " has " 
 						+ zombieCount.get(i) + " zombies."); }
 				System.out.println();			
 			}
 				
 			if (gameOver()) {
-				printWinner();
+				//printWinner();
 			}
 		}
 
-		printTotalPoints();
+		//printTotalPoints(); TODO: UNCOMMENT
 				
 		for (int i = 0; i < undealt.size(); i++) { cardsPlayed.restockDeck(undealt.get(i)); }
 		undealt.clear();
