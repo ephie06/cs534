@@ -28,7 +28,7 @@ class RolloutNode extends State {
     RolloutNode (State secondCopy, ArrayList<Card> hand, RolloutNode parent) {
         super(secondCopy);
         this.hand = new ArrayList<>(hand);
-        this.targetIndex = playerIndex;
+        //this.targetIndex = playerIndex; //TODO: Comment out
         this.parent = parent;
         rng = ThreadLocalRandom.current();
         fillPossibleMoves();
@@ -38,7 +38,7 @@ class RolloutNode extends State {
     RolloutNode (RolloutNode secondCopy, RolloutNode parent) {
         super(secondCopy);
         this.hand = new ArrayList<>(secondCopy.hand);
-        this.targetIndex = playerIndex;
+        //this.targetIndex = playerIndex; //TODO: Comment out
         this.parent = parent;
         rng = ThreadLocalRandom.current();
         fillPossibleMoves();
@@ -145,15 +145,15 @@ class RolloutNode extends State {
     }
 
 
-    void expansion(int count) {
+    void expansion() {
 
         if (possibleMoves.size()==0) {
             return;
         }
 
         var newNode = new RolloutNode(this, this);
-        Card card = possibleMoves.get(count);
-        possibleMoves.remove(count);
+        Card card = possibleMoves.get(0);
+        possibleMoves.remove(0);
         newNode.makeOneMove(card);
         children.add(newNode);
     }
@@ -162,7 +162,7 @@ class RolloutNode extends State {
         RolloutNode no = this;
         while (no != null) {
             no.numObserved++;
-            no.totalValue += reward.get(playerIndex);
+            no.totalValue += reward.get(playerIndex) - Collections.max(reward);
             no = no.parent;
         }
     }
@@ -232,7 +232,10 @@ public class NewRolloutPlayer extends Player {
         root.parent = null;
 
         //Populate root with potential moves it can take
-        for(int count = 0; count < root.possibleMoves.size(); count++) root.expansion(count);
+        while (root.possibleMoves.size() != 0) {
+            root.expansion();
+
+        }
 
         long start = System.currentTimeMillis();
 

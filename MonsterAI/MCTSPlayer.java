@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 class MCTSNode extends State {
 	
 	boolean visited = false;
-	int targetIndex = 2; // the player index that the hand belong to (the player we want it to win) 
+	int targetIndex = 1; // the player index that the hand belong to (the player we want it to win) 
 	ArrayList<Card> hand;
 	int totalValue = 0;
 	int numObserved = 0;
@@ -28,7 +28,6 @@ class MCTSNode extends State {
 	MCTSNode (State secondCopy, ArrayList<Card> hand, MCTSNode parent) {
 		super(secondCopy);
 		this.hand = new ArrayList<>(hand);
-		this.targetIndex = playerIndex;
 		this.parent = parent;
 		rng = ThreadLocalRandom.current();
 		fillPossibleMoves();
@@ -38,7 +37,6 @@ class MCTSNode extends State {
 	MCTSNode (MCTSNode secondCopy, MCTSNode parent) {
 		super(secondCopy);
 		this.hand = new ArrayList<>(secondCopy.hand);
-		this.targetIndex = playerIndex;
 		this.parent = parent;
 		rng = ThreadLocalRandom.current();
 		fillPossibleMoves();
