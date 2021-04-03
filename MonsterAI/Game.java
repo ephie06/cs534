@@ -298,6 +298,8 @@ class Game {
 				printRound(firstPlayer); 	// for debugging: use this method to see what cards were played this round
 			}
 
+			playerOrder.get(1).notifyRound(currentRound, firstPlayer);
+			
 			// 1. findTaker() will update who took the cards this round
 			// 2. calculatePoints() will calculate how many points this round consisted of
 			// 3. addPoints() will add those points to the correct player

@@ -321,6 +321,9 @@ class MCTSNode extends State {
 		while(temp.possibleMoves.size()!=0) {
 			temp.makeOneMove(temp.possibleMoves.get(0)); //possibleMoves already shuffled.
 		}
+		if (temp.isGameValid()) {
+			return null;
+		}
 		return temp.terminalValue();
 	}
 	
@@ -387,6 +390,18 @@ public class MCTSPlayer extends Player {
 	}
 
 	@Override
+	void notifyRound(ArrayList<Card> currentRound, int firstPlayer) {
+		if (currentRound.size()>1) {
+			Suit firstSuit = getFirstSuit(currentRound);
+			for (int i=1; i<currentRound.size(); i++) {
+				if (currentRound.get(i).getSuit() != firstSuit) {
+					lastExhaust.get(firstSuit)[(firstPlayer + i) % 3] = true;
+				}
+			}
+		}
+	};
+	
+	@Override
 	Card performAction(State masterCopy) {
 		if (masterCopy.cardsPlayed.size()<3) {
 			lastRoundScore = new ArrayList<>(masterCopy.playerScores);
@@ -431,6 +446,9 @@ public class MCTSPlayer extends Player {
 				break;
 			}
 			var rewards = cNode.simulation();
+			while (rewards == null) {
+				rewards = cNode.simulation();
+			}
 			cNode.backPropagation(rewards);
 		}
 		MCTSDebugger.dump(root, log);

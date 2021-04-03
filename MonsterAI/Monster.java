@@ -11,9 +11,9 @@ public class Monster {
 				Deck thing = new Deck();
 
 				// Assume this order is clockwise
-				Player p1 = new RandomPlayAI("Random1");
-				Player p2 = new MCTSPlayer("MCTS", 100);
-				Player p3 = new RandomPlayAI("Random3");
+				Player p1 = new GDPlayer("Random1");
+				Player p2 = new MCTSPlayer("MCTS", 1000);
+				Player p3 = new GDPlayer("Random3");
 
 				// at the end of every
 				// game, we will have all the cards back in the deck
@@ -44,7 +44,7 @@ public class Monster {
 
 	public static void main(String[] args) {
 
-		int n = 8; // Number of threads
+		int n = 1; // Number of threads
 		for (int i = 0; i < n; i++) {
 			MultithreadingDemo object = new MultithreadingDemo();
 			object.start();

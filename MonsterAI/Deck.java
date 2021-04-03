@@ -1,6 +1,7 @@
 // dependencies are on Suit, Value, and Card files
 
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class Deck {
 
@@ -44,7 +45,7 @@ public class Deck {
 	// this is used to shuffle the deck (reorder the elements in the arraylist)
 	void shuffleDeck() {
 		long seed = System.nanoTime();
-		Collections.shuffle(allCards, new Random(seed));
+		Collections.shuffle(allCards, ThreadLocalRandom.current());
 		// this is for debugging
 		 //printDeck();
 	}
