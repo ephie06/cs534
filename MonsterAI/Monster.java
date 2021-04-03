@@ -12,7 +12,7 @@ public class Monster {
 
 				// Assume this order is clockwise
 				Player p1 = new RandomPlayAI("Random1");
-				Player p2 = new NewRolloutPlayer("NRP", 100);
+				Player p2 = new MCTSPlayer("MCTS", 100);
 				Player p3 = new RandomPlayAI("Random3");
 
 				// at the end of every

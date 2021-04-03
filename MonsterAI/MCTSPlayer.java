@@ -1,6 +1,5 @@
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -138,6 +137,24 @@ class MCTSNode extends State {
 		Collections.shuffle(possibleMoves, rng);
 	}
 	
+	private boolean anyTrolls(ArrayList<Card> check) {
+		boolean flag = false;
+		for (Card c : check) {
+			if (c.getSuit() == Suit.TROLLS) { flag = true; }
+		} return flag;
+	}	
+	
+	private int undealtPoints(ArrayList<Card> undealt) {
+		int points = 0;
+		boolean anyTrolls = anyTrolls(undealt);
+		for (Card c : undealt) {
+			if (c.getSuit() == Suit.UNICORNS && !anyTrolls) points += 3;
+			if (c.getSuit() == Suit.FAIRIES) points+=2;
+			if (c.getSuit() == Suit.ZOMBIES) points -= 1;
+		}
+		return points;
+	}
+	
 	private void makeOneMove(Card c) {
 		prevStep = c;
 		playCard(c, this.playerIndex);
@@ -155,7 +172,7 @@ class MCTSNode extends State {
 
 			// If game end.
 			if (!super.isGameValid()) {
-				playerScores.set(taker, playerScores.get(taker)+3); // give a expectation of the score of undealt cards.
+				playerScores.set(taker, playerScores.get(taker)+undealtPoints(cardsPlayed.invertDeck));
 			}
 			
 			playerIndex = taker;
@@ -308,7 +325,7 @@ public class MCTSPlayer extends Player {
 			var rewards = cNode.simulation();
 			cNode.backPropagation(rewards);
 		}
-		MCTSDebugger.dump(root, log);
+//		MCTSDebugger.dump(root, log);
 		Card card = root.children.stream().max(Comparator.comparingDouble(i->i.meanValue())).get().prevStep;
 		hand.remove(card);
 		return card;
