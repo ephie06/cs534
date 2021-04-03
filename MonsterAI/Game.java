@@ -38,7 +38,7 @@ class Game {
 	// Call this every time a new game is played to shuffle the deck and clear player hands
 	void initNewGame () {
 		cardsPlayed.shuffleDeck();
-		// cardsPlayed.printDeck(); // debugging to make sure the deck is correct
+		 cardsPlayed.printDeck(); // debugging to make sure the deck is correct
 		// cardsPlayed.checkDeck(); // we need a way to check that all 60 cards are here correctly
 		// clear the hands of all the players (to make sure they're not holding anything already!)
 		for (Player p : playerOrder) { p.clearHand(); }
@@ -53,7 +53,7 @@ class Game {
 		
 		// sort all hands
 		for (Player p : playerOrder) { p.sortHand(); }
-		for (Player p : playerOrder) { p.printHand(); }		// for debugging to check all the hands are valid
+		for (Player p : playerOrder) { p.printHand(); }		// for debugging to check all the hands are valid //TODO: UNCOMMENT
 		cardsPlayed.printDeck();								// for debugging to check all cards have been dealt
 		// pick first player
 		firstPlayer = 0;

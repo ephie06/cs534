@@ -1,6 +1,11 @@
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
@@ -62,8 +67,16 @@ class MCTSNode extends State {
 		}
 	}
 	
-	ArrayList<Integer> terminalValue() {
-		return playerScores;
+	ArrayList<Double> terminalValue() {
+		ArrayList<Double> e = new ArrayList<>();
+		for (int i =0; i<3; i++) {
+			e.add((double)playerScores.get(i).intValue());
+		}
+		int max = playerScores.stream().max(Integer::compare).get();
+		for (int i=0; i<e.size(); i++) {
+			e.set(i, 1/(double)(max - e.get(i)+1));
+		}
+		return e;
 	}
 	
 	// Given a suit, check if the hand has that suit
@@ -85,28 +98,41 @@ class MCTSNode extends State {
 		return super.isGameValid() && playerScores.stream().allMatch(i->i<200);
 	}
 	
+	boolean inSim = false;
+	
 	private void fillPossibleMoves() {
 		possibleMoves.clear();
 		if (!isGameValid()) {
 			return; 
 		}
 		
+		Suit firstSuit = getFirstSuit(currentRound);
+
 		if (playerIndex == targetIndex) {
-			Suit firstSuit = getFirstSuit(currentRound);
-			// If no cards were played this round, play a random card 
-			if (firstSuit == null) {
-				possibleMoves.addAll(hand);
+			if (firstSuit != null && checkSuit(firstSuit)) {
+				possibleMoves.addAll(hand.stream().filter(i->(i.getSuit()==firstSuit)).collect(Collectors.toList()));
 			} else {
-				if (checkSuit(firstSuit)) {
-					possibleMoves.addAll(hand.stream().filter(i->(i.getSuit()==firstSuit)).collect(Collectors.toList()));
-				} else {
-					possibleMoves.addAll(hand);
-				}
+				possibleMoves.addAll(hand);
 			}
+			
 		} else {
 			possibleMoves.addAll(cardsPlayed.invertDeck);
 			for (var c:hand) {
 				possibleMoves.remove(c);
+			}
+			
+			if (inSim && firstSuit!=null) {
+				List<Card> thisSuit = possibleMoves.stream().filter(i->(i.getSuit()==firstSuit)).collect(Collectors.toList());  
+				//With a probability calculated by size of 'hand', 'thisSuit' and 'possibleMoves', we filter the PossibleMoves with the suit.
+				int suitCount = thisSuit.size();
+				int totalCount = possibleMoves.size();
+				int handCount = (totalCount+1)/2;  
+				double pGotACardOtherSuit = 1- suitCount/totalCount;
+				double pAllCardOtherSuit = Math.pow(pGotACardOtherSuit, handCount);
+				if (rng.nextDouble() < 1 - pAllCardOtherSuit) {
+					possibleMoves.clear();
+					possibleMoves.addAll(thisSuit);
+				}
 			}
 		}
 		Collections.shuffle(possibleMoves, rng);
@@ -128,7 +154,7 @@ class MCTSNode extends State {
 			currentRound.clear();
 
 			// If game end.
-			if (!isGameValid()) {
+			if (!super.isGameValid()) {
 				playerScores.set(taker, playerScores.get(taker)+3); // give a expectation of the score of undealt cards.
 			}
 			
@@ -162,16 +188,17 @@ class MCTSNode extends State {
 		return newNode;
 	}
 	
-	void backPropagation(ArrayList<Integer> reward) {
-		totalValue += reward.get(playerIndex);
+	void backPropagation(ArrayList<Double> reward) {
 		numObserved += 1;
 		if (parent!=null) {
+			totalValue += reward.get(parent.playerIndex);
 			parent.backPropagation(reward);
 		}
 	}
 	
-	ArrayList<Integer> simulation() {
+	ArrayList<Double> simulation() {
 		MCTSNode temp = new MCTSNode(this, this);
+		temp.inSim = true;
 		while(temp.possibleMoves.size()!=0) {
 			temp.makeOneMove(temp.possibleMoves.get(0)); //possibleMoves already shuffled.
 		}
@@ -193,14 +220,43 @@ class MCTSNode extends State {
 	
 }
 
+class MCTSDebugger {
+	public static void dump(MCTSNode root, PrintStream output) {
+		StringBuilder out = new StringBuilder();
+		dump(root, 0, out, 0);
+		output.println(out.toString());
+	}
+	
+	private static void dump(MCTSNode cur, int indent, StringBuilder out, int depth) {
+		if (depth > 1) return;
+		out.append(" ".repeat(indent)).append(cur.playerIndex).append(':').append(cur.prevStep==null? "null": cur.prevStep.printCard())
+		.append(':').append(cur.totalValue).append("/").append(cur.numObserved).append("/").append(String.format("%.3f", cur.meanValue())).append(":players:").append(cur.playerScores).append("\n");
+		for (MCTSNode child: cur.children) {
+			dump(child, indent+2, out, depth+1);
+		}
+	}
+}
+
 public class MCTSPlayer extends Player {
 
 	public long timeLimitInMillis = 1000; 
+	public static PrintStream log;
+	public ArrayList<Integer> lastRoundScore;
 	
 	MCTSPlayer(String id, long timeLimitInMillis) {
 		super(id);
 		// TODO Auto-generated constructor stub
 		this.timeLimitInMillis = timeLimitInMillis;
+		lastRoundScore = new ArrayList<>();
+		lastRoundScore.add(0);
+		lastRoundScore.add(0);
+		lastRoundScore.add(0);
+		try {
+			log = new PrintStream(new File("log/log.txt"));
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	MCTSNode root = null;
@@ -212,6 +268,13 @@ public class MCTSPlayer extends Player {
 
 	@Override
 	Card performAction(State masterCopy) {
+		if (masterCopy.cardsPlayed.size()<3) {
+			lastRoundScore = new ArrayList<>(masterCopy.playerScores);
+		}
+		
+		for (int i=0; i<3; i++) {
+			masterCopy.playerScores.set(i, masterCopy.playerScores.get(i) - lastRoundScore.get(i));
+		}
 		
 		found: {
 			if (root == null) {
@@ -235,14 +298,17 @@ public class MCTSPlayer extends Player {
 		root.parent = null;
 		
 		long start = System.currentTimeMillis();
-		
+
 		while (System.currentTimeMillis() - start < timeLimitInMillis) {
 			var tNode = root.selection();
 			var cNode = tNode.expansion();
+			if (cNode.numObserved>2 || cNode.numObserved > 20) {
+				break;
+			}
 			var rewards = cNode.simulation();
 			cNode.backPropagation(rewards);
 		}
-		
+		MCTSDebugger.dump(root, log);
 		Card card = root.children.stream().max(Comparator.comparingDouble(i->i.meanValue())).get().prevStep;
 		hand.remove(card);
 		return card;
