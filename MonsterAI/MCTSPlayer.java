@@ -11,9 +11,9 @@ import java.util.stream.Collectors;
 class MCTSNode extends State {
 	
 	boolean visited = false;
-	int targetIndex = 1; // the player index that the hand belong to (the player we want it to win) 
+	static int targetIndex = 1; // the player index that the hand belong to (the player we want it to win) 
 	ArrayList<Card> hand;
-	int totalValue = 0;
+	double totalValue = 0;
 	int numObserved = 0;
 	ArrayList<MCTSNode> children = new ArrayList<>();
 	ArrayList<Card> possibleMoves = new ArrayList<>();
@@ -71,9 +71,26 @@ class MCTSNode extends State {
 		for (int i =0; i<3; i++) {
 			e.add((double)playerScores.get(i).intValue());
 		}
-		int max = playerScores.stream().max(Integer::compare).get();
+		double maxV =-10000;
+		double secV =-10000;
+		for (int i = 0; i<3; i++) {
+			if (e.get(i) > secV) {
+				secV = e.get(i);
+				if (maxV < secV) {
+					double a = secV;
+					secV = maxV;
+					maxV = a;
+				}
+			}
+		}
+		
 		for (int i=0; i<e.size(); i++) {
-			e.set(i, 1/(double)(max - e.get(i)+1));
+			double reward = 0.8/(double)(maxV - e.get(i) + 1);
+			if (Double.compare(e.get(i), maxV)==0) {
+				reward += 0.02 * 1/(e.get(i) - secV);
+			}
+			if (reward>1.4) reward = 1.4;
+			e.set(i, reward);
 		}
 		return e;
 	}
@@ -285,13 +302,13 @@ public class MCTSPlayer extends Player {
 
 	@Override
 	Card performAction(State masterCopy) {
-		if (masterCopy.cardsPlayed.size()<3) {
-			lastRoundScore = new ArrayList<>(masterCopy.playerScores);
-		}
-		
-		for (int i=0; i<3; i++) {
-			masterCopy.playerScores.set(i, masterCopy.playerScores.get(i) - lastRoundScore.get(i));
-		}
+//		if (masterCopy.cardsPlayed.size()<3) {
+//			lastRoundScore = new ArrayList<>(masterCopy.playerScores);
+//		}
+//		
+//		for (int i=0; i<3; i++) {
+//			masterCopy.playerScores.set(i, masterCopy.playerScores.get(i) - lastRoundScore.get(i));
+//		}
 		
 		found: {
 			if (root == null) {
@@ -325,7 +342,7 @@ public class MCTSPlayer extends Player {
 			var rewards = cNode.simulation();
 			cNode.backPropagation(rewards);
 		}
-//		MCTSDebugger.dump(root, log);
+		MCTSDebugger.dump(root, log);
 		Card card = root.children.stream().max(Comparator.comparingDouble(i->i.meanValue())).get().prevStep;
 		hand.remove(card);
 		return card;
