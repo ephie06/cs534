@@ -4,9 +4,68 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
+
+class ExhaustTable extends HashMap<Suit, boolean[]>{
+	private static final long serialVersionUID = 1L;
+
+	public ExhaustTable() {
+		super();
+		init();
+	}
+	
+	void init() {
+		put(Suit.FAIRIES, new boolean[3]);
+		put(Suit.TROLLS, new boolean[3]);
+		put(Suit.ZOMBIES, new boolean[3]);
+		put(Suit.UNICORNS, new boolean[3]);
+	}
+	
+	void copyFrom(HashMap<Suit, boolean[]> table) {
+		for (Suit key: keySet()) {
+			for (int i=0; i<3; i++) {
+				get(key)[i] = table.get(key)[i];
+			}
+		}
+	}
+	
+	void logicOr(HashMap<Suit, boolean[]> table) {
+		for (Suit key: keySet()) {
+			for (int i=0; i<3; i++) {
+				get(key)[i] = get(key)[i] || table.get(key)[i];
+			}
+		}
+	}
+	
+	ExhaustTable deepCopy() {
+		ExhaustTable n = new ExhaustTable();
+		n.copyFrom(this);
+		return n;
+	}
+	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		for (Suit key: keySet()) {
+			switch (key) {
+				case UNICORNS: sb.append("🦄\t"); break;
+				case FAIRIES: sb.append ("🧚\t"); break;
+				case TROLLS: sb.append( "👺\t"); break;
+				case ZOMBIES: sb.append("\uD83E\uDDDF\t"); break;
+			}
+
+			for (int i=0; i<3; i++) {
+				sb.append(get(key)[i]).append("\t");
+			}
+			sb.append("\n");
+		}
+		return sb.toString();
+	}
+	
+}
 
 class MCTSNode extends State {
 	
@@ -19,12 +78,15 @@ class MCTSNode extends State {
 	ArrayList<Card> possibleMoves = new ArrayList<>();
 	MCTSNode parent = null;
 	Card prevStep = null;
+	ExhaustTable suitExhaustedTable = null; 
 	
 	MCTSNode(Deck deck, ArrayList<Card> round, ArrayList<Integer> scores, int index, ArrayList<Card> hand, MCTSNode parent) {
 		super(deck, round, scores, index);
 		// TODO Auto-generated constructor stub
 		this.hand = new ArrayList<>(hand);
 		this.parent = parent;
+		suitExhaustedTable = new ExhaustTable();
+		updateExhaustTable();
 		rng = ThreadLocalRandom.current();
 		fillPossibleMoves();
 	}
@@ -33,6 +95,8 @@ class MCTSNode extends State {
 		super(secondCopy);
 		this.hand = new ArrayList<>(hand);
 		this.parent = parent;
+		suitExhaustedTable = new ExhaustTable();
+		updateExhaustTable();
 		rng = ThreadLocalRandom.current();
 		fillPossibleMoves();
 	}
@@ -42,6 +106,8 @@ class MCTSNode extends State {
 		super(secondCopy);
 		this.hand = new ArrayList<>(secondCopy.hand);
 		this.parent = parent;
+		suitExhaustedTable = secondCopy.suitExhaustedTable.deepCopy();
+		updateExhaustTable();
 		rng = ThreadLocalRandom.current();
 		fillPossibleMoves();
 	}
@@ -109,6 +175,19 @@ class MCTSNode extends State {
 		return currentRound.get(0).getSuit();
 	}
 	
+	//only check currentRound.
+	void updateExhaustTable() {
+		if (currentRound.size()>1) {
+			Suit firstSuit = getFirstSuit(currentRound);
+			int firstPlayer = (playerIndex - currentRound.size() + 3) % 3;
+			for (int i=1; i<currentRound.size(); i++) {
+				if (currentRound.get(i).getSuit() != firstSuit) {
+					suitExhaustedTable.get(firstSuit)[(firstPlayer + i) % 3] = true;
+				}
+			}
+		}
+	}
+	
 	@Override
 	boolean isGameValid() {
 		return super.isGameValid() && playerScores.stream().allMatch(i->i<200);
@@ -137,7 +216,7 @@ class MCTSNode extends State {
 				possibleMoves.remove(c);
 			}
 			
-			if (inSim && firstSuit!=null) {
+			if (inSim && firstSuit!=null && suitExhaustedTable.get(firstSuit)[playerIndex]==false) {
 				List<Card> thisSuit = possibleMoves.stream().filter(i->(i.getSuit()==firstSuit)).collect(Collectors.toList());  
 				//With a probability calculated by size of 'hand', 'thisSuit' and 'possibleMoves', we filter the PossibleMoves with the suit.
 				int suitCount = thisSuit.size();
@@ -149,7 +228,10 @@ class MCTSNode extends State {
 					possibleMoves.clear();
 					possibleMoves.addAll(thisSuit);
 				}
-			}
+			} 
+			
+			List<Card> possible = possibleMoves.stream().filter(i->suitExhaustedTable.get(i.getSuit())[playerIndex] == false).collect(Collectors.toList());
+			possibleMoves.addAll(possible);
 		}
 		Collections.shuffle(possibleMoves, rng);
 	}
@@ -183,6 +265,8 @@ class MCTSNode extends State {
 			int points = calculatePoints();
 			int taker = findTaker(firstPlayer);
 			playerScores.set(taker, playerScores.get(taker)+points);
+			
+			updateExhaustTable();
 			
 			// Clear the cards on the table (don't worry, pointers to them are tracked in the cardsPlayed deck)
 			currentRound.clear();
@@ -223,6 +307,7 @@ class MCTSNode extends State {
 	}
 	
 	void backPropagation(ArrayList<Double> reward) {
+		if (reward==null) return;
 		numObserved += 1;
 		if (parent!=null) {
 			totalValue += reward.get(parent.playerIndex);
@@ -276,6 +361,7 @@ public class MCTSPlayer extends Player {
 	public long timeLimitInMillis = 1000; 
 	public static PrintStream log;
 	public ArrayList<Integer> lastRoundScore;
+	public ExhaustTable lastExhaust = new ExhaustTable();
 	
 	MCTSPlayer(String id, long timeLimitInMillis) {
 		super(id);
@@ -304,6 +390,8 @@ public class MCTSPlayer extends Player {
 	Card performAction(State masterCopy) {
 		if (masterCopy.cardsPlayed.size()<3) {
 			lastRoundScore = new ArrayList<>(masterCopy.playerScores);
+			root = null;
+			lastExhaust = new ExhaustTable();
 		}
 		
 		for (int i=0; i<3; i++) {
@@ -330,6 +418,9 @@ public class MCTSPlayer extends Player {
 			}
 		}
 		root.parent = null;
+		root.suitExhaustedTable.logicOr(lastExhaust);
+		lastExhaust = root.suitExhaustedTable;
+		System.out.println(lastExhaust.toString());
 		
 		long start = System.currentTimeMillis();
 
@@ -342,7 +433,7 @@ public class MCTSPlayer extends Player {
 			var rewards = cNode.simulation();
 			cNode.backPropagation(rewards);
 		}
-//		MCTSDebugger.dump(root, log);
+		MCTSDebugger.dump(root, log);
 		Card card = root.children.stream().max(Comparator.comparingDouble(i->i.meanValue())).get().prevStep;
 		hand.remove(card);
 		return card;
