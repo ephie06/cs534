@@ -302,13 +302,13 @@ public class MCTSPlayer extends Player {
 
 	@Override
 	Card performAction(State masterCopy) {
-//		if (masterCopy.cardsPlayed.size()<3) {
-//			lastRoundScore = new ArrayList<>(masterCopy.playerScores);
-//		}
-//		
-//		for (int i=0; i<3; i++) {
-//			masterCopy.playerScores.set(i, masterCopy.playerScores.get(i) - lastRoundScore.get(i));
-//		}
+		if (masterCopy.cardsPlayed.size()<3) {
+			lastRoundScore = new ArrayList<>(masterCopy.playerScores);
+		}
+		
+		for (int i=0; i<3; i++) {
+			masterCopy.playerScores.set(i, masterCopy.playerScores.get(i) - lastRoundScore.get(i));
+		}
 		
 		found: {
 			if (root == null) {
@@ -342,7 +342,7 @@ public class MCTSPlayer extends Player {
 			var rewards = cNode.simulation();
 			cNode.backPropagation(rewards);
 		}
-		MCTSDebugger.dump(root, log);
+//		MCTSDebugger.dump(root, log);
 		Card card = root.children.stream().max(Comparator.comparingDouble(i->i.meanValue())).get().prevStep;
 		hand.remove(card);
 		return card;
