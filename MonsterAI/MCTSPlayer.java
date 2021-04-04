@@ -360,7 +360,7 @@ class MCTSDebugger {
 	}
 	
 	private static void dump(MCTSNode cur, int indent, StringBuilder out, int depth) {
-		if (depth > 3) return;
+		if (depth > 1) return;
 		out.append(" ".repeat(indent)).append(cur.playerIndex).append(':').append(cur.prevStep==null? "null": cur.prevStep.printCard())
 		.append(':').append(cur.totalValue).append("/").append(cur.numObserved).append("/").append(String.format("%.3f", cur.meanValue())).append(":players:").append(cur.playerScores).append("\n");
 		for (MCTSNode child: cur.children) {
@@ -458,7 +458,7 @@ public class MCTSPlayer extends Player {
 			var rewards = cNode.simulation();
 			cNode.backPropagation(rewards);
 		}
-		MCTSDebugger.dump(root, log);
+//		MCTSDebugger.dump(root, log);
 		Card card = root.children.stream().max(Comparator.comparingDouble(i->i.meanValue())).get().prevStep;
 		hand.remove(card);
 		return card;
