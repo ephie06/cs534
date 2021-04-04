@@ -151,9 +151,9 @@ class MCTSNode extends State {
 		}
 		
 		for (int i=0; i<e.size(); i++) {
-			double reward = 0.8/(double)(maxV - e.get(i) + 1);
+			double reward = 0.8/(maxV - e.get(i) + 1);
 			if (Double.compare(e.get(i), maxV)==0) {
-				reward += 0.02 * 1/(e.get(i) - secV);
+				reward += 0.02 * (e.get(i) - secV);
 			}
 			if (reward>1.4) reward = 1.4;
 			e.set(i, reward);
@@ -205,16 +205,13 @@ class MCTSNode extends State {
 
 		if (playerIndex == targetIndex) {
 			if (firstSuit != null && checkSuit(firstSuit)) {
-				possibleMoves.addAll(hand.stream().filter(i->(i.getSuit()==firstSuit)).collect(Collectors.toList()));
+				possibleMoves = hand.stream().filter(i->(i.getSuit()==firstSuit)).collect(Collectors.toCollection(ArrayList::new));
 			} else {
 				possibleMoves.addAll(hand);
 			}
 			
 		} else {
-			possibleMoves.addAll(cardsPlayed.invertDeck);
-			for (var c:hand) {
-				possibleMoves.remove(c);
-			}
+			possibleMoves = cardsPlayed.invertDeck.stream().filter(i->!hand.contains(i)).collect(Collectors.toCollection(ArrayList::new));
 			
 			if (inSim && firstSuit!=null && suitExhaustedTable.get(firstSuit)[playerIndex]==false) {
 				List<Card> thisSuit = possibleMoves.stream().filter(i->(i.getSuit()==firstSuit)).collect(Collectors.toList());  
@@ -222,7 +219,7 @@ class MCTSNode extends State {
 				int suitCount = thisSuit.size();
 				int totalCount = possibleMoves.size();
 				int handCount = (totalCount+1)/2;  
-				double pGotACardOtherSuit = 1- suitCount/totalCount;
+				double pGotACardOtherSuit = 1- (double)suitCount/totalCount;
 				double pAllCardOtherSuit = Math.pow(pGotACardOtherSuit, handCount);
 				if (rng.nextDouble() < 1 - pAllCardOtherSuit) {
 					possibleMoves.clear();
@@ -230,8 +227,10 @@ class MCTSNode extends State {
 				}
 			} 
 			
-			List<Card> possible = possibleMoves.stream().filter(i->suitExhaustedTable.get(i.getSuit())[playerIndex] == false).collect(Collectors.toList());
-			possibleMoves.addAll(possible);
+			ArrayList<Card> possible = possibleMoves.stream().filter(i->suitExhaustedTable.get(i.getSuit())[playerIndex] == false).collect(Collectors.toCollection(ArrayList::new));
+			if (possible.size()!=0 ) {
+				possibleMoves = possible;
+			} 
 		}
 		Collections.shuffle(possibleMoves, rng);
 	}
@@ -307,7 +306,7 @@ class MCTSNode extends State {
 	}
 	
 	void backPropagation(ArrayList<Double> reward) {
-		if (reward==null) return;
+//		if (reward==null) return;
 		numObserved += 1;
 		if (parent!=null) {
 			totalValue += reward.get(parent.playerIndex);
@@ -321,9 +320,6 @@ class MCTSNode extends State {
 		while(temp.possibleMoves.size()!=0) {
 			temp.makeOneMove(temp.possibleMoves.get(0)); //possibleMoves already shuffled.
 		}
-		if (temp.isGameValid()) {
-			return null;
-		}
 		return temp.terminalValue();
 	}
 	
@@ -335,10 +331,24 @@ class MCTSNode extends State {
         that.cardsPlayed.invertDeck.sort(null);
         return playerIndex == that.playerIndex
                 && currentRound.equals(that.currentRound)
-                && playerScores.equals(that.playerScores)
+//                && playerScores.equals(that.playerScores)
                 && cardsPlayed.invertDeck.equals(that.cardsPlayed.invertDeck);
 
     }
+	
+	public boolean equals(MCTSNode obj) {
+        if (this == obj) return true;
+        if (obj == null) return false;
+        State that = obj;
+        cardsPlayed.invertDeck.sort(null);
+        that.cardsPlayed.invertDeck.sort(null);
+        obj.hand.sort(null);
+        hand.sort(null);
+        return playerIndex == that.playerIndex
+                && currentRound.equals(that.currentRound)
+                && hand.equals(obj.hand)
+                && cardsPlayed.invertDeck.equals(that.cardsPlayed.invertDeck);
+	}
 	
 }
 
@@ -350,7 +360,7 @@ class MCTSDebugger {
 	}
 	
 	private static void dump(MCTSNode cur, int indent, StringBuilder out, int depth) {
-		if (depth > 1) return;
+		if (depth > 3) return;
 		out.append(" ".repeat(indent)).append(cur.playerIndex).append(':').append(cur.prevStep==null? "null": cur.prevStep.printCard())
 		.append(':').append(cur.totalValue).append("/").append(cur.numObserved).append("/").append(String.format("%.3f", cur.meanValue())).append(":players:").append(cur.playerScores).append("\n");
 		for (MCTSNode child: cur.children) {
@@ -446,9 +456,6 @@ public class MCTSPlayer extends Player {
 				break;
 			}
 			var rewards = cNode.simulation();
-			while (rewards == null) {
-				rewards = cNode.simulation();
-			}
 			cNode.backPropagation(rewards);
 		}
 		MCTSDebugger.dump(root, log);
