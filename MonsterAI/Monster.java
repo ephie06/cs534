@@ -22,9 +22,9 @@ public class Monster {
 				Deck thing = new Deck();
 
 				// Assume this order is clockwise
-				Player p1 = new GDPlayer("GD1");
+				Player p1 = new RandomPlayAI("gd1");
 				Player p2 = new MCTSPlayer("MCTS", 1000);
-				Player p3 = new GDPlayer("GD3");
+				Player p3 = new RandomPlayAI("gd3");
 
 				// at the end of every
 				// game, we will have all the cards back in the deck
@@ -58,8 +58,8 @@ public class Monster {
 		public void run()
 		{
 			try {
-				new File("log/gd1000/").mkdirs();
-				data = new PrintStream(new File("log/gd1000/" + Thread.currentThread().getId() + ".csv"));
+				new File("log/rdt/").mkdirs();
+				data = new PrintStream(new File("log/rdt/" + Thread.currentThread().getId() + ".csv"));
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -84,7 +84,7 @@ public class Monster {
 
 		int n = 10; // Number of threads
 		for (int i = 0; i < n; i++) {
-			MultithreadingDemo object = new MultithreadingDemo(20);
+			MultithreadingDemo object = new MultithreadingDemo(10);
 			object.start();
 		}
 
