@@ -97,6 +97,10 @@ abstract class Player {
 	// Return true if you want your controller to print debug messages
 	// Or false if you want it to just play through
 	abstract boolean setDebug();
+	
+	void notifyRound(ArrayList<Card> currentRound, int firstPlayer) {
+		return;
+	}
 
 	// Given any sort of player, make a decision to play a card
 	// Pass in a copy of the game state for full playout functionality
