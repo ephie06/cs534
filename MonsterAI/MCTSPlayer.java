@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
@@ -137,27 +138,27 @@ class MCTSNode extends State {
 		for (int i =0; i<3; i++) {
 			e.add((double)playerScores.get(i).intValue());
 		}
-		double maxV =-10000;
-		double secV =-10000;
-		for (int i = 0; i<3; i++) {
-			if (e.get(i) > secV) {
-				secV = e.get(i);
-				if (maxV < secV) {
-					double a = secV;
-					secV = maxV;
-					maxV = a;
-				}
-			}
-		}
-		
-		for (int i=0; i<e.size(); i++) {
-			double reward = 0.8/(maxV - e.get(i) + 1);
-			if (Double.compare(e.get(i), maxV)==0) {
-				reward += 0.02 * (e.get(i) - secV);
-			}
-			if (reward>1.4) reward = 1.4;
-			e.set(i, reward);
-		}
+//		double maxV =-10000;
+//		double secV =-10000;
+//		for (int i = 0; i<3; i++) {
+//			if (e.get(i) > secV) {
+//				secV = e.get(i);
+//				if (maxV < secV) {
+//					double a = secV;
+//					secV = maxV;
+//					maxV = a;
+//				}
+//			}
+//		}
+//		
+//		for (int i=0; i<e.size(); i++) {
+//			double reward = e.get(i) - maxV;
+//			if (Double.compare(e.get(i), maxV)==0) {
+//				reward += e.get(i) - secV;
+//			}
+//			e.set(i, (reward+30)/6);
+//		} //0.35
+
 		return e;
 	}
 	
@@ -214,7 +215,7 @@ class MCTSNode extends State {
 			possibleMoves = cardsPlayed.invertDeck.stream().filter(i->!hand.contains(i)).collect(Collectors.toCollection(ArrayList::new));
 			
 			if (inSim && firstSuit!=null && suitExhaustedTable.get(firstSuit)[playerIndex]==false) {
-				List<Card> thisSuit = possibleMoves.stream().filter(i->(i.getSuit()==firstSuit)).collect(Collectors.toList());  
+				ArrayList<Card> thisSuit = possibleMoves.stream().filter(i->(i.getSuit()==firstSuit)).collect(Collectors.toCollection(ArrayList::new));  
 				//With a probability calculated by size of 'hand', 'thisSuit' and 'possibleMoves', we filter the PossibleMoves with the suit.
 				int suitCount = thisSuit.size();
 				int totalCount = possibleMoves.size();
@@ -223,7 +224,31 @@ class MCTSNode extends State {
 				double pAllCardOtherSuit = Math.pow(pGotACardOtherSuit, handCount);
 				if (rng.nextDouble() < 1 - pAllCardOtherSuit) {
 					possibleMoves.clear();
-					possibleMoves.addAll(thisSuit);
+					thisSuit.sort(null);
+					switch (firstSuit) {
+					case TROLLS:
+					case FAIRIES:
+					case UNICORNS:
+					{
+						ArrayList<Card> bb = thisSuit.stream().filter(i->i.getValue().compareTo(currentRound.get(0).getValue()) > 0).collect(Collectors.toCollection(ArrayList::new));
+						if (bb.isEmpty()) {
+							possibleMoves = thisSuit;
+						} else {
+							possibleMoves = bb;
+						}
+					}
+						break;
+					case ZOMBIES:
+					{
+						ArrayList<Card> bb = thisSuit.stream().filter(i->i.getValue().compareTo(currentRound.get(0).getValue()) < 0).collect(Collectors.toCollection(ArrayList::new));
+						if (bb.isEmpty()) {
+							possibleMoves = thisSuit;
+						} else {
+							possibleMoves = bb;
+						}
+					}
+						break;
+					}
 				}
 			} 
 			
@@ -445,14 +470,14 @@ public class MCTSPlayer extends Player {
 		root.parent = null;
 		root.suitExhaustedTable.logicOr(lastExhaust);
 		lastExhaust = root.suitExhaustedTable;
-		System.out.println(lastExhaust.toString());
+//		System.out.println(lastExhaust.toString());
 		
 		long start = System.currentTimeMillis();
 
 		while (System.currentTimeMillis() - start < timeLimitInMillis) {
 			var tNode = root.selection();
 			var cNode = tNode.expansion();
-			if (cNode.numObserved>2 || cNode.numObserved > 20) {
+			if (cNode.numObserved > 100) {
 				break;
 			}
 			var rewards = cNode.simulation();
