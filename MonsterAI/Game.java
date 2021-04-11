@@ -195,7 +195,7 @@ class Game {
 	}
 
 	// Print the person who is in the lead after this game
-	void printWinner() {
+	int printWinner() {
 		int highestScore = playerOrder.get(0).getPoints();
 		int index = 0;
 		for (int i = 0; i < playerOrder.size(); i++) {
@@ -205,6 +205,7 @@ class Game {
 			}
 		}
 		System.out.println("\n" + playerOrder.get(index).getName() + " is the winner after this round.\n");
+		return index;
 	}
 
 	// Print out how many points each player currently has between all games
@@ -298,6 +299,8 @@ class Game {
 				printRound(firstPlayer); 	// for debugging: use this method to see what cards were played this round
 			}
 
+			playerOrder.get(1).notifyRound(currentRound, firstPlayer);
+			
 			// 1. findTaker() will update who took the cards this round
 			// 2. calculatePoints() will calculate how many points this round consisted of
 			// 3. addPoints() will add those points to the correct player

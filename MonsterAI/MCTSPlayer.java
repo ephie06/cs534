@@ -71,27 +71,27 @@ class MCTSNode extends State {
 		for (int i =0; i<3; i++) {
 			e.add((double)playerScores.get(i).intValue());
 		}
-		double maxV =-10000;
-		double secV =-10000;
-		for (int i = 0; i<3; i++) {
-			if (e.get(i) > secV) {
-				secV = e.get(i);
-				if (maxV < secV) {
-					double a = secV;
-					secV = maxV;
-					maxV = a;
-				}
-			}
-		}
-		
-		for (int i=0; i<e.size(); i++) {
-			double reward = 0.8/(double)(maxV - e.get(i) + 1);
-			if (Double.compare(e.get(i), maxV)==0) {
-				reward += 0.02 * 1/(e.get(i) - secV);
-			}
-			if (reward>1.4) reward = 1.4;
-			e.set(i, reward);
-		}
+//		double maxV =-10000;
+//		double secV =-10000;
+//		for (int i = 0; i<3; i++) {
+//			if (e.get(i) > secV) {
+//				secV = e.get(i);
+//				if (maxV < secV) {
+//					double a = secV;
+//					secV = maxV;
+//					maxV = a;
+//				}
+//			}
+//		}
+//		
+//		for (int i=0; i<e.size(); i++) {
+//			double reward = 0.8/(double)(maxV - e.get(i) + 1);
+//			if (Double.compare(e.get(i), maxV)==0) {
+//				reward += 0.02 * 1/(e.get(i) - secV);
+//			}
+//			if (reward>1.4) reward = 1.4;
+//			e.set(i, reward);
+//		}
 		return e;
 	}
 	
@@ -336,7 +336,7 @@ public class MCTSPlayer extends Player {
 		while (System.currentTimeMillis() - start < timeLimitInMillis) {
 			var tNode = root.selection();
 			var cNode = tNode.expansion();
-			if (cNode.numObserved>2 || cNode.numObserved > 20) {
+			if (cNode.numObserved > 100) {
 				break;
 			}
 			var rewards = cNode.simulation();
