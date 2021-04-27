@@ -1,24 +1,29 @@
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Vector;
 
 public class CardMatrix extends HashMap<Suit, double[]>{
 	
 	private static final long serialVersionUID = 1L;
-
+	Vector<Double> cardVector;
+	
 	public CardMatrix(ArrayList<Card> cards) {
 		super();
 		init();
 		buildMatrix(cards);
+		toVector();
 	}		
 	
-		void init() {
-			put(Suit.FAIRIES, new double[3]);
-			put(Suit.TROLLS, new double[3]);
+		void init() {		
 			put(Suit.ZOMBIES, new double[3]);
+			put(Suit.TROLLS, new double[3]);
+			put(Suit.FAIRIES, new double[3]);
 			put(Suit.UNICORNS, new double[3]);
 		}
 		
-		void copyFrom(HashMap<Suit, int[]> table) {
+		void copyFrom(HashMap<Suit, double[]> table) {
 			for (Suit key: keySet()) {
 				for (int i=0; i<3; i++) {
 					get(key)[i] = table.get(key)[i];
@@ -94,20 +99,32 @@ public class CardMatrix extends HashMap<Suit, double[]>{
 		return sumOfSqDf/numCards;
 	}
 	
-	void buildMatrix(ArrayList<Card> cards) {
-		this.get(Suit.UNICORNS)[0] = numCardsOfSuit(cards, Suit.UNICORNS);
-		this.get(Suit.UNICORNS)[1] = meanOfCards(cards, Suit.UNICORNS);
-		this.get(Suit.UNICORNS)[2] = variance(cards, Suit.UNICORNS);
+	void buildMatrix(ArrayList<Card> cards) {	
+		this.get(Suit.ZOMBIES)[0] = numCardsOfSuit(cards, Suit.ZOMBIES);
+		this.get(Suit.ZOMBIES)[1] = meanOfCards(cards, Suit.ZOMBIES);
+		this.get(Suit.ZOMBIES)[2] = variance(cards, Suit.ZOMBIES);
 		this.get(Suit.TROLLS)[0] = numCardsOfSuit(cards, Suit.TROLLS);
 		this.get(Suit.TROLLS)[1] = meanOfCards(cards, Suit.TROLLS);
 		this.get(Suit.TROLLS)[2] = variance(cards, Suit.TROLLS);
 		this.get(Suit.FAIRIES)[0] = numCardsOfSuit(cards, Suit.FAIRIES);
 		this.get(Suit.FAIRIES)[1] = meanOfCards(cards, Suit.FAIRIES);
 		this.get(Suit.FAIRIES)[2] = variance(cards, Suit.FAIRIES);
-		this.get(Suit.ZOMBIES)[0] = numCardsOfSuit(cards, Suit.ZOMBIES);
-		this.get(Suit.ZOMBIES)[1] = meanOfCards(cards, Suit.ZOMBIES);
-		this.get(Suit.ZOMBIES)[2] = variance(cards, Suit.ZOMBIES);
+		this.get(Suit.UNICORNS)[0] = numCardsOfSuit(cards, Suit.UNICORNS);
+		this.get(Suit.UNICORNS)[1] = meanOfCards(cards, Suit.UNICORNS);
+		this.get(Suit.UNICORNS)[2] = variance(cards, Suit.UNICORNS);
 		
 	}
+	
+	void toVector() {
+		Vector<Double> cardsVector = new Vector<Double>();
+		Iterator<Map.Entry<Suit, double[]>> entrySet = this.entrySet().iterator();
+		while (entrySet.hasNext()){
+            Map.Entry<Suit, double[]> entry = entrySet.next();
+            double[] thisEntry = entry.getValue();
+            for (double d : thisEntry) { cardsVector.add(d); }
+        }
+         this.cardVector = cardsVector;   
+    }
+	
 
 }
