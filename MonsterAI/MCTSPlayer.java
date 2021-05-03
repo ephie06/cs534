@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
@@ -17,14 +16,14 @@ class ExhaustTable extends HashMap<Suit, boolean[]>{
 		super();
 		init();
 	}
-	
+
 	void init() {
 		put(Suit.FAIRIES, new boolean[3]);
 		put(Suit.TROLLS, new boolean[3]);
 		put(Suit.ZOMBIES, new boolean[3]);
 		put(Suit.UNICORNS, new boolean[3]);
 	}
-	
+
 	void copyFrom(HashMap<Suit, boolean[]> table) {
 		for (Suit key: keySet()) {
 			for (int i=0; i<3; i++) {
@@ -32,7 +31,7 @@ class ExhaustTable extends HashMap<Suit, boolean[]>{
 			}
 		}
 	}
-	
+
 	void logicOr(HashMap<Suit, boolean[]> table) {
 		for (Suit key: keySet()) {
 			for (int i=0; i<3; i++) {
@@ -40,13 +39,13 @@ class ExhaustTable extends HashMap<Suit, boolean[]>{
 			}
 		}
 	}
-	
+
 	ExhaustTable deepCopy() {
 		ExhaustTable n = new ExhaustTable();
 		n.copyFrom(this);
 		return n;
 	}
-	
+
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
@@ -65,13 +64,13 @@ class ExhaustTable extends HashMap<Suit, boolean[]>{
 		}
 		return sb.toString();
 	}
-	
+
 }
 
 class MCTSNode extends State {
-	
+
 	boolean visited = false;
-	static int targetIndex = 1; // the player index that the hand belong to (the player we want it to win) 
+	static int targetIndex = 1; // the player index that the hand belong to (the player we want it to win)
 	ArrayList<Card> hand;
 	double totalValue = 0;
 	int numObserved = 0;
@@ -79,8 +78,8 @@ class MCTSNode extends State {
 	ArrayList<Card> possibleMoves = new ArrayList<>();
 	MCTSNode parent = null;
 	Card prevStep = null;
-	ExhaustTable suitExhaustedTable = null; 
-	
+	ExhaustTable suitExhaustedTable = null;
+
 	MCTSNode(Deck deck, ArrayList<Card> round, ArrayList<Integer> scores, int index, ArrayList<Card> hand, MCTSNode parent) {
 		super(deck, round, scores, index);
 		// TODO Auto-generated constructor stub
@@ -91,7 +90,7 @@ class MCTSNode extends State {
 		rng = ThreadLocalRandom.current();
 		fillPossibleMoves();
 	}
-	
+
 	MCTSNode (State secondCopy, ArrayList<Card> hand, MCTSNode parent) {
 		super(secondCopy);
 		this.hand = new ArrayList<>(hand);
@@ -101,8 +100,8 @@ class MCTSNode extends State {
 		rng = ThreadLocalRandom.current();
 		fillPossibleMoves();
 	}
-	
-	
+
+
 	MCTSNode (MCTSNode secondCopy, MCTSNode parent) {
 		super(secondCopy);
 		this.hand = new ArrayList<>(secondCopy.hand);
@@ -112,56 +111,56 @@ class MCTSNode extends State {
 		rng = ThreadLocalRandom.current();
 		fillPossibleMoves();
 	}
-	
+
 	public double meanValue() {
 		if (numObserved==0) return 0;
 		return (double)totalValue/numObserved;
-		
+
 	}
-	
+
 	public double UCB95() {
 		if (numObserved == 0) {
 			return Double.POSITIVE_INFINITY;
 		}
-		return meanValue() + 2 * Math.sqrt(Math.log(parent.numObserved)/numObserved); 
+		return meanValue() + 2 * Math.sqrt(Math.log(parent.numObserved)/numObserved);
 	}
-	
+
 	void playCard(Card c, int index) {
 		playCard(c);
 		if (index == targetIndex) {
 			hand.remove(c);
 		}
 	}
-	
+
 	ArrayList<Double> terminalValue() {
 		ArrayList<Double> e = new ArrayList<>();
 		for (int i =0; i<3; i++) {
 			e.add((double)playerScores.get(i).intValue());
 		}
-//		double maxV =-10000;
-//		double secV =-10000;
-//		for (int i = 0; i<3; i++) {
-//			if (e.get(i) > secV) {
-//				secV = e.get(i);
-//				if (maxV < secV) {
-//					double a = secV;
-//					secV = maxV;
-//					maxV = a;
-//				}
-//			}
-//		}
-//		
-//		for (int i=0; i<e.size(); i++) {
-//			double reward = e.get(i) - maxV;
-//			if (Double.compare(e.get(i), maxV)==0) {
-//				reward += e.get(i) - secV;
-//			}
-//			e.set(i, (reward+30)/6);
-//		} //0.35
+		double maxV =-10000;
+		double secV =-10000;
+		for (int i = 0; i<3; i++) {
+			if (e.get(i) > secV) {
+				secV = e.get(i);
+				if (maxV < secV) {
+					double a = secV;
+					secV = maxV;
+					maxV = a;
+				}
+			}
+		}
 
+		for (int i=0; i<e.size(); i++) {
+			double reward = 0.8/(maxV - e.get(i) + 1);
+			if (Double.compare(e.get(i), maxV)==0) {
+				reward += 0.02 * (e.get(i) - secV);
+			}
+			if (reward>1.4) reward = 1.4;
+			e.set(i, reward);
+		}
 		return e;
 	}
-	
+
 	// Given a suit, check if the hand has that suit
 	boolean checkSuit(Suit check) {
 		boolean flag = false;
@@ -175,7 +174,7 @@ class MCTSNode extends State {
 		if (currentRound.size() == 0) return null;
 		return currentRound.get(0).getSuit();
 	}
-	
+
 	//only check currentRound.
 	void updateExhaustTable() {
 		if (currentRound.size()>1) {
@@ -188,20 +187,20 @@ class MCTSNode extends State {
 			}
 		}
 	}
-	
+
 	@Override
 	boolean isGameValid() {
 		return super.isGameValid() && playerScores.stream().allMatch(i->i<200);
 	}
-	
+
 	boolean inSim = false;
-	
+
 	private void fillPossibleMoves() {
 		possibleMoves.clear();
 		if (!isGameValid()) {
-			return; 
+			return;
 		}
-		
+
 		Suit firstSuit = getFirstSuit(currentRound);
 
 		if (playerIndex == targetIndex) {
@@ -210,63 +209,39 @@ class MCTSNode extends State {
 			} else {
 				possibleMoves.addAll(hand);
 			}
-			
+
 		} else {
 			possibleMoves = cardsPlayed.invertDeck.stream().filter(i->!hand.contains(i)).collect(Collectors.toCollection(ArrayList::new));
-			
+
 			if (inSim && firstSuit!=null && suitExhaustedTable.get(firstSuit)[playerIndex]==false) {
-				ArrayList<Card> thisSuit = possibleMoves.stream().filter(i->(i.getSuit()==firstSuit)).collect(Collectors.toCollection(ArrayList::new));  
+				List<Card> thisSuit = possibleMoves.stream().filter(i->(i.getSuit()==firstSuit)).collect(Collectors.toList());
 				//With a probability calculated by size of 'hand', 'thisSuit' and 'possibleMoves', we filter the PossibleMoves with the suit.
 				int suitCount = thisSuit.size();
 				int totalCount = possibleMoves.size();
-				int handCount = (totalCount+1)/2;  
+				int handCount = (totalCount+1)/2;
 				double pGotACardOtherSuit = 1- (double)suitCount/totalCount;
 				double pAllCardOtherSuit = Math.pow(pGotACardOtherSuit, handCount);
 				if (rng.nextDouble() < 1 - pAllCardOtherSuit) {
 					possibleMoves.clear();
-					thisSuit.sort(null);
-					switch (firstSuit) {
-					case TROLLS:
-					case FAIRIES:
-					case UNICORNS:
-					{
-						ArrayList<Card> bb = thisSuit.stream().filter(i->i.getValue().compareTo(currentRound.get(0).getValue()) > 0).collect(Collectors.toCollection(ArrayList::new));
-						if (bb.isEmpty()) {
-							possibleMoves = thisSuit;
-						} else {
-							possibleMoves = bb;
-						}
-					}
-						break;
-					case ZOMBIES:
-					{
-						ArrayList<Card> bb = thisSuit.stream().filter(i->i.getValue().compareTo(currentRound.get(0).getValue()) < 0).collect(Collectors.toCollection(ArrayList::new));
-						if (bb.isEmpty()) {
-							possibleMoves = thisSuit;
-						} else {
-							possibleMoves = bb;
-						}
-					}
-						break;
-					}
+					possibleMoves.addAll(thisSuit);
 				}
-			} 
-			
+			}
+
 			ArrayList<Card> possible = possibleMoves.stream().filter(i->suitExhaustedTable.get(i.getSuit())[playerIndex] == false).collect(Collectors.toCollection(ArrayList::new));
 			if (possible.size()!=0 ) {
 				possibleMoves = possible;
-			} 
+			}
 		}
 		Collections.shuffle(possibleMoves, rng);
 	}
-	
+
 	private boolean anyTrolls(ArrayList<Card> check) {
 		boolean flag = false;
 		for (Card c : check) {
 			if (c.getSuit() == Suit.TROLLS) { flag = true; }
 		} return flag;
-	}	
-	
+	}
+
 	private int undealtPoints(ArrayList<Card> undealt) {
 		int points = 0;
 		boolean anyTrolls = anyTrolls(undealt);
@@ -277,7 +252,7 @@ class MCTSNode extends State {
 		}
 		return points;
 	}
-	
+
 	private void makeOneMove(Card c) {
 		prevStep = c;
 		playCard(c, this.playerIndex);
@@ -289,9 +264,9 @@ class MCTSNode extends State {
 			int points = calculatePoints();
 			int taker = findTaker(firstPlayer);
 			playerScores.set(taker, playerScores.get(taker)+points);
-			
+
 			updateExhaustTable();
-			
+
 			// Clear the cards on the table (don't worry, pointers to them are tracked in the cardsPlayed deck)
 			currentRound.clear();
 
@@ -299,14 +274,14 @@ class MCTSNode extends State {
 			if (!super.isGameValid()) {
 				playerScores.set(taker, playerScores.get(taker)+undealtPoints(cardsPlayed.invertDeck));
 			}
-			
+
 			playerIndex = taker;
 		}
 		fillPossibleMoves();
-		
+
 	}
-	
-	MCTSNode selection() {
+
+	MCTSNode selection() { //TODO: DO NOT USE
 		if (possibleMoves.size()!=0) {
 			return this;
 		}
@@ -315,13 +290,13 @@ class MCTSNode extends State {
 		}
 		return children.stream().max(Comparator.comparingDouble(i->i.UCB95())).get().selection();
 	}
-	
+
 	MCTSNode expansion() {
 
 		if (possibleMoves.size()==0) {
 			return this;
 		}
-		
+
 		var newNode = new MCTSNode(this, this);
 		Card card = possibleMoves.get(possibleMoves.size()-1);
 		possibleMoves.remove(possibleMoves.size()-1);
@@ -329,7 +304,7 @@ class MCTSNode extends State {
 		children.add(newNode);
 		return newNode;
 	}
-	
+
 	void backPropagation(ArrayList<Double> reward) {
 //		if (reward==null) return;
 		numObserved += 1;
@@ -338,7 +313,7 @@ class MCTSNode extends State {
 			parent.backPropagation(reward);
 		}
 	}
-	
+
 	ArrayList<Double> simulation() {
 		MCTSNode temp = new MCTSNode(this, this);
 		temp.inSim = true;
@@ -347,34 +322,34 @@ class MCTSNode extends State {
 		}
 		return temp.terminalValue();
 	}
-	
-	public boolean equals(State obj) {
-        if (this == obj) return true;
-        if (obj == null) return false;
-        State that = obj;
-        cardsPlayed.invertDeck.sort(null);
-        that.cardsPlayed.invertDeck.sort(null);
-        return playerIndex == that.playerIndex
-                && currentRound.equals(that.currentRound)
-//                && playerScores.equals(that.playerScores)
-                && cardsPlayed.invertDeck.equals(that.cardsPlayed.invertDeck);
 
-    }
-	
-	public boolean equals(MCTSNode obj) {
-        if (this == obj) return true;
-        if (obj == null) return false;
-        State that = obj;
-        cardsPlayed.invertDeck.sort(null);
-        that.cardsPlayed.invertDeck.sort(null);
-        obj.hand.sort(null);
-        hand.sort(null);
-        return playerIndex == that.playerIndex
-                && currentRound.equals(that.currentRound)
-                && hand.equals(obj.hand)
-                && cardsPlayed.invertDeck.equals(that.cardsPlayed.invertDeck);
+	public boolean equals(State obj) {
+		if (this == obj) return true;
+		if (obj == null) return false;
+		State that = obj;
+		cardsPlayed.invertDeck.sort(null);
+		that.cardsPlayed.invertDeck.sort(null);
+		return playerIndex == that.playerIndex
+				&& currentRound.equals(that.currentRound)
+//                && playerScores.equals(that.playerScores)
+				&& cardsPlayed.invertDeck.equals(that.cardsPlayed.invertDeck);
+
 	}
-	
+
+	public boolean equals(MCTSNode obj) {
+		if (this == obj) return true;
+		if (obj == null) return false;
+		State that = obj;
+		cardsPlayed.invertDeck.sort(null);
+		that.cardsPlayed.invertDeck.sort(null);
+		obj.hand.sort(null);
+		hand.sort(null);
+		return playerIndex == that.playerIndex
+				&& currentRound.equals(that.currentRound)
+				&& hand.equals(obj.hand)
+				&& cardsPlayed.invertDeck.equals(that.cardsPlayed.invertDeck);
+	}
+
 }
 
 class MCTSDebugger {
@@ -383,11 +358,11 @@ class MCTSDebugger {
 		dump(root, 0, out, 0);
 		output.println(out.toString());
 	}
-	
+
 	private static void dump(MCTSNode cur, int indent, StringBuilder out, int depth) {
 		if (depth > 1) return;
 		out.append(" ".repeat(indent)).append(cur.playerIndex).append(':').append(cur.prevStep==null? "null": cur.prevStep.printCard())
-		.append(':').append(cur.totalValue).append("/").append(cur.numObserved).append("/").append(String.format("%.3f", cur.meanValue())).append(":players:").append(cur.playerScores).append("\n");
+				.append(':').append(cur.totalValue).append("/").append(cur.numObserved).append("/").append(String.format("%.3f", cur.meanValue())).append(":players:").append(cur.playerScores).append("\n");
 		for (MCTSNode child: cur.children) {
 			dump(child, indent+2, out, depth+1);
 		}
@@ -396,11 +371,11 @@ class MCTSDebugger {
 
 public class MCTSPlayer extends Player {
 
-	public long timeLimitInMillis = 1000; 
+	public long timeLimitInMillis = 1000;
 	public static PrintStream log;
 	public ArrayList<Integer> lastRoundScore;
 	public ExhaustTable lastExhaust = new ExhaustTable();
-	
+
 	MCTSPlayer(String id, long timeLimitInMillis) {
 		super(id);
 		// TODO Auto-generated constructor stub
@@ -418,7 +393,7 @@ public class MCTSPlayer extends Player {
 	}
 
 	MCTSNode root = null;
-	
+
 	@Override
 	boolean setDebug() {
 		return false;
@@ -435,7 +410,7 @@ public class MCTSPlayer extends Player {
 			}
 		}
 	};
-	
+
 	@Override
 	Card performAction(State masterCopy) {
 		if (masterCopy.cardsPlayed.size()<3) {
@@ -443,11 +418,11 @@ public class MCTSPlayer extends Player {
 			root = null;
 			lastExhaust = new ExhaustTable();
 		}
-		
+
 		for (int i=0; i<3; i++) {
 			masterCopy.playerScores.set(i, masterCopy.playerScores.get(i) - lastRoundScore.get(i));
 		}
-		
+
 		found: {
 			if (root == null) {
 				root = new MCTSNode(masterCopy, hand, null);
@@ -470,14 +445,14 @@ public class MCTSPlayer extends Player {
 		root.parent = null;
 		root.suitExhaustedTable.logicOr(lastExhaust);
 		lastExhaust = root.suitExhaustedTable;
-//		System.out.println(lastExhaust.toString());
-		
+		System.out.println(lastExhaust.toString());
+
 		long start = System.currentTimeMillis();
 
 		while (System.currentTimeMillis() - start < timeLimitInMillis) {
 			var tNode = root.selection();
 			var cNode = tNode.expansion();
-			if (cNode.numObserved > 100) {
+			if (cNode.numObserved>2 || cNode.numObserved > 20) {
 				break;
 			}
 			var rewards = cNode.simulation();

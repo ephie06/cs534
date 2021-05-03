@@ -23,7 +23,7 @@ public class Monster {
 
 				// Assume this order is clockwise
 				Player p1 = new GDPlayer("gd1");
-				Player p2 = new MCTSPlayer("MCTS", 1000);
+				Player p2 = new MCTSPlayer("MCTS", 100);
 				Player p3 = new GDPlayer("gd3");
 
 				// at the end of every
@@ -83,9 +83,9 @@ public class Monster {
 
 	public static void main(String[] args) {
 
-		int n = 10; // Number of threads
+		int n = 1; // Number of threads
 		for (int i = 0; i < n; i++) {
-			MultithreadingDemo object = new MultithreadingDemo(20);
+			MultithreadingDemo object = new MultithreadingDemo(1);
 			object.start();
 		}
 

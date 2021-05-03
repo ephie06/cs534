@@ -132,7 +132,6 @@ class RolloutNode extends State {
             playerIndex = taker;
         }
         fillPossibleMoves();
-
     }
 
     RolloutNode selection() {

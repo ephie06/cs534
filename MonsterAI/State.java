@@ -26,6 +26,16 @@ class State {
 	Random 				rng = new Random();
 	int 				playerIndex;		// To help remember which player # this is
 
+	//Fields for MCRL
+	int[]				suitsMissing; //Trolls, Zombies, Unicorns, Fairies, 0 if it is not missing, 1 if it is
+	int[]				suitHighCard; //Trolls, Zombies, Unicorns, Fairies, stores only integer value, 0 if suit is missing
+	Suit				suitOfTrick;
+	Card				highestValueCardPlayed; //null if AI is beginning suit
+	int					valueOfTrick; //set to 0 if unicorn trick and troll was played, slightly redundant
+	int					roundNumber; //1-18 for which part of game we are on
+
+
+
 	// Remember to make COPIES of what is passed in!
 	State (Deck deck, ArrayList<Card> round, ArrayList<Integer> scores, int index) {
 		cardsPlayed     = new Deck (deck);
