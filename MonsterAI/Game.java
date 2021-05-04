@@ -14,7 +14,8 @@ class Game {
 	Scanner 			in;						// For scanner input
 	String 				s;						// To store scanner input
 	boolean 			zArmy;					// Keep track so can only happen once per round
-
+	CardMatrix			handMatrix;
+	
 	// Every game must have three players and one deck!
 	// Note: This WILL NOT shuffle the deck or deal the cards here
 	// We ONLY do that upon playing a new game
@@ -50,6 +51,12 @@ class Game {
 		for(int i=0; i<undealt.size(); i++) {
 			System.out.print(undealt.get(i).printCard() + ", ");}
 		System.out.println();
+//		Player testP = playerOrder.get(1);
+//		handMatrix = new CardMatrix(testP.hand);
+//		handMatrix.buildMatrixWithoutHigh();
+//		handMatrix.toVector();
+//		System.out.println(handMatrix);
+//		System.out.println(handMatrix.cardVector);
 		
 		// sort all hands
 		for (Player p : playerOrder) { p.sortHand(); }
