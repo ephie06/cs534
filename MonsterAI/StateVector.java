@@ -9,17 +9,17 @@ public class StateVector extends Vector<Double> {
 	private static final long serialVersionUID = 1L;
 	
 	Vector<Double> 		stateRep;
-	Deck 				cardsPlayed;		
+	Deck 			cardsPlayed;		
 	ArrayList<Card> 	currentRound;
 	ArrayList<Double> 	playerScores;
-	int 				playerIndex;
-	static int 			targetIndex = 1; 
+	int 			playerIndex;
+	static int 		targetIndex = 1; 
 	ArrayList<Card> 	hand;
 	RLExhaustTable 		suitExhaustedTable = null; 
-	double 				trickPoints;
-	double 				highCardTrick;
+	double 			trickPoints;
+	double 			highCardTrick;
 	Vector<Double> 		exhausts;
-	double 				roundNumber;
+	double 			roundNumber;
 	
 	//TO DO ZOMBIES
 	
