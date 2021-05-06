@@ -22,9 +22,9 @@ public class Monster {
 				Deck thing = new Deck();
 
 				// Assume this order is clockwise
-				Player p1 = new GDPlayer("gd1");
-				Player p2 = new MCTSPlayer("MCTS", 100);
-				Player p3 = new GDPlayer("gd3");
+				Player p1 = new RandomPlayAI("rp1");
+				Player p2 = new MCRLPlayer("MCRL", 100);
+				Player p3 = new RandomPlayAI("rp3");
 
 				// at the end of every
 				// game, we will have all the cards back in the deck
