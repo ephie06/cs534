@@ -1,106 +1,145 @@
 import java.util.ArrayList;
 import java.util.Vector;
 
-public class StateVector extends Vector<Double> {
-	
+public class StateVector extends Vector<Integer> {
+
 	/**
-	 * 
+	 * State Vector takes a state and outputs the following stateRep of 27 Integers: How many cards of each
+	 * suit the player has and their mean value rounded down [8], how many cards of each suit have been
+	 * played and their mean value rounded down [8], point value of the current trick [1], exhaust table
+	 * binaries for p1 and p3 [8], binary can the player beat the current high card in the trick [1], point
+	 * difference between the player and the highest of the p1 and p3 [1]. Suit exhaust tables and point difference
+	 * are currently dependent on the player being in position 2 in the game...
 	 */
+
 	private static final long serialVersionUID = 1L;
-	
-	Vector<Double> 		stateRep;
-	Deck 			cardsPlayed;		
+
+	Vector<Integer> 	stateRep;
+	Deck 				cardsPlayed;
 	ArrayList<Card> 	currentRound;
-	ArrayList<Double> 	playerScores;
-	int 			playerIndex;
-	static int 		targetIndex = 1; 
+	ArrayList<Integer> 	playerScores;
+	int 				playerIndex;
+	static int 			targetIndex = 1;
 	ArrayList<Card> 	hand;
-	RLExhaustTable 		suitExhaustedTable = null; 
-	double 			trickPoints;
-	double 			highCardTrick;
-	Vector<Double> 		exhausts;
-	double 			roundNumber;
-	
+	ExhaustTable 		suitExhaustedTable = null;
+	int 				trickPoints;
+	int 				highCardTrick;
+	Vector<Integer> 	exhausts;
+//	int 				roundNumber;
+
 	//TO DO ZOMBIES
-	
-	StateVector(RLNode state) {
-		
-		this.cardsPlayed = state.cardsPlayed;	
+
+	StateVector(MCTSNode state) {
+
+		this.cardsPlayed = state.cardsPlayed;
 		this.currentRound = state.currentRound;
 		this.playerIndex = state.playerIndex;
 		this.hand = state.hand;
 		this.suitExhaustedTable = state.suitExhaustedTable;
 		this.trickPoints = state.calculatePoints();
 		this.exhausts = suitExhaustedTable.toVector();
-		this.roundNumber = state.getRoundNumber();
-		
+		this.playerScores = state.playerScores;
+//		this.roundNumber = state.getRoundNumber();
+
 		highCardTrick();
-		playerScores(state.playerScores);
-		
 		buildVector();
-		
+
 	}
 
 	private void buildVector() {
-		
-		stateRep = new Vector<Double>();
-		
+
+		stateRep = new Vector<Integer>();
+
 		CardMatrix playerMatrix = new CardMatrix(hand);
-		playerMatrix.initHigh();
-		playerMatrix.buildMatrixWithHigh();
-		Vector<Double> playerCards = playerMatrix.toVector();
-		
-		// how many cards of each suit the player has, mean value of cards in each suit, high card in each suit
+		playerMatrix.init();
+		playerMatrix.buildMatrix();
+		Vector<Integer> playerCards = playerMatrix.toVector();
+
+		// how many cards of each suit the player has, mean value of cards in each suit
 		stateRep.addAll(playerCards);
-		
+
 		CardMatrix cardsPlayedMatrix = new CardMatrix(cardsPlayed.allCards);
-		cardsPlayedMatrix.initNoHigh();
-		cardsPlayedMatrix.buildMatrixWithoutHigh();
-		Vector<Double> playedCards = cardsPlayedMatrix.toVector();
-		
+		cardsPlayedMatrix.init();
+		cardsPlayedMatrix.buildMatrix();
+		Vector<Integer> playedCards = cardsPlayedMatrix.toVector();
+
 		//how many cards of each suit have already been played, mean value of cards in each suit that have been played
 		stateRep.addAll(playedCards);
-		
-		//highest value of in-suit card in current trick
-		stateRep.add(highCardTrick);	
-		
+
 		//point value of current trick
 		stateRep.add(trickPoints);
-		
-		//exhaust binaries for p1 and p3
+
+		//exhaust binaries for p1 and p3: this is a problem when player is not in middle position
 		stateRep.addAll(exhausts);
-		
-		//round number
-		stateRep.add(roundNumber);
-		
+
+		//binary if player can beat high card of suit in trick
+		stateRep.add(canBeat());
+
+		//round number: I think this might be redundant
+//		stateRep.add(roundNumber);
+
 		//player scores
-		stateRep.addAll(playerScores);
-		
-		
-									
+//		stateRep.addAll(playerScores);
+
+		//diff between middle player and highest of other two players
+		stateRep.add(leadingBy());
+
+
+
 	}
-	
-	void highCardTrick () {	
+
+	int highCardTrick () {
 		int largestValue = -1;
 		if(currentRound.size() > 0) {
-		Suit firstSuit = currentRound.get(0).getSuit();
-		for (Card c: currentRound) {
-			if (c.getSuit() == firstSuit) {
-				if (largestValue < c.getValue().val) {
-					largestValue = c.getValue().val;
+			Suit firstSuit = currentRound.get(0).getSuit();
+			for (Card c: currentRound) {
+				if (c.getSuit() == firstSuit) {
+					if (largestValue < c.getValue().val) {
+						largestValue = c.getValue().val;
+					}
 				}
-			}
+			} return largestValue;
 		}
-		}
+		return 0;
 
-		highCardTrick = largestValue;
 	}
-	
-	void playerScores(ArrayList<Integer> intScore) {
-		ArrayList<Double> scores = new ArrayList<Double>();
-		for(Integer i : intScore){
-		    scores.add(i.doubleValue());
+
+	int highCardInSuit() {
+		int largestValue = -1;
+		if(currentRound.size() > 0) {
+			Suit firstSuit = currentRound.get(0).getSuit();
+			for (Card c: hand) {
+				if (c.getSuit() == firstSuit) {
+					if (largestValue < c.getValue().val) {
+						largestValue = c.getValue().val;
+					}
+				}
+			}return largestValue;
 		}
-		playerScores = scores;				
+		return 1;
+
 	}
+
+	int canBeat() {
+		if (highCardInSuit() > highCardTrick()) return 1;
+		else return 0;
+	}
+
+	int leadingBy() {
+		int rlScore = playerScores.get(1);
+		int high = Math.max(playerScores.get(0), playerScores.get(2));
+		return rlScore - high;
+	}
+
+
+
+//	void playerScores(ArrayList<Integer> intScore) {
+//		ArrayList<Integer> scores = new ArrayList<Integer>();
+//		for(Integer i : intScore){
+//		    scores.add(i);
+//		}
+//		playerScores = scores;
+//	}
+
+
 }
