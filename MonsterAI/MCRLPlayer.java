@@ -45,11 +45,13 @@ class LinearModel {
      * @param state the state we are currently playing
      * @return the predicted value of the state move(how good that move is)(exp. just our score)
      */
-    public double makePrediction(Card move, MCRLState state) {
+    public double makePrediction(Card move, MCRLGameState state) {
 
         //TODO: Call makeOneMove fcn from NewRolloutPlayer/MCTSPlayer (inputting parameter move)
-        MCRLState afterState = state;
+        MCRLGameState afterState = state;
         afterState.makeOneMove(move);
+        StateVector afterStateVector = new StateVector(state);
+        System.out.println(afterStateVector);
 
         double suitOfTrick_double = afterState.currentRound.isEmpty() ? 0 :afterState.getFirstSuit(state.currentRound).ordinal(); //TODO: Fix this it doesnt make sense
         double highestValueCardPlayed_double = afterState.currentRound.isEmpty() ? 0 : (afterState.currentRound.stream().max(Comparator.comparing(i->i.getValue().ordinal())).get()).getValue().ordinal();
@@ -71,7 +73,7 @@ class LinearModel {
      * @param state - the original game
      * @param rolloutResult - the rollout result(how good the game ended up)(exp from above. our actual score)
      */
-    public void updateWeights(Card move, MCRLState state, double rolloutResult) {
+    public void updateWeights(Card move, MCRLGameState state, double rolloutResult) {
         //System.out.println(this);
 
         //TODO: Figure these values out
@@ -85,7 +87,7 @@ class LinearModel {
         double difference = yhat - rolloutResult;//get the difference between predicted and result
 
         //TODO: Call makeOneMove fcn from NewRolloutPlayer/MCTSPlayer (inputting parameter move)
-        MCRLState afterState = state;
+        MCRLGameState afterState = state;
         //System.out.println(difference + " = " + yhat + " - " + rolloutResult);
 
         //update weights to get closer to actual values
@@ -102,7 +104,7 @@ class LinearModel {
     }
 }
 
-class MCRLState extends State {
+class MCRLGameState extends State {
 
     //Fields not included from MCTS: visited,total value, numObserved, children, parent, prevStep
 
@@ -111,8 +113,8 @@ class MCRLState extends State {
     ArrayList<Card> hand;
     CopyOnWriteArrayList<Card> possibleActions = new CopyOnWriteArrayList<>();//TODO: Terrible fix, find out how to iterate over actions correctly
     ExhaustTable suitExhaustedTable = null;
-    MCRLState parent = null;
-    ArrayList<MCRLState> children = new ArrayList<>();
+    MCRLGameState parent = null;
+    ArrayList<MCRLGameState> children = new ArrayList<>();
     boolean inSim = false;
 
     //Fields tested in LinearModel
@@ -125,7 +127,7 @@ class MCRLState extends State {
     int					roundNumber; //1-18 for which part of game we are on
 
 
-    MCRLState(State secondCopy, ArrayList<Card> hand) {
+    MCRLGameState(State secondCopy, ArrayList<Card> hand) {
         super(secondCopy);
         this.hand = new ArrayList<>(hand);
         suitExhaustedTable = new ExhaustTable();
@@ -143,7 +145,7 @@ class MCRLState extends State {
     }
 
 
-    MCRLState(MCRLState secondCopy, MCRLState parent) {
+    MCRLGameState(MCRLGameState secondCopy, MCRLGameState parent) {
         super(secondCopy);
         this.hand = new ArrayList<>(secondCopy.hand);
         suitExhaustedTable = secondCopy.suitExhaustedTable.deepCopy();
@@ -208,8 +210,7 @@ class MCRLState extends State {
         if (currentRound.size() == 0) return null;
         return currentRound.get(0).getSuit();
     }
-
-    // Get the first suit that was played this round
+    // Get the first suit that was played this round //TODO: ALREADY WRITTEN IN StateVector
     Value getHighestValue(ArrayList<Card> currentRound) {
         if (currentRound.size() == 0) return null;
         Suit fSuit = this.suitOfTrick;
@@ -330,13 +331,13 @@ class MCRLState extends State {
         return children.stream().max(Comparator.comparingDouble(i->i.UCB95())).get().selection();
     }*/
 
-    MCRLState expansion() {
+    MCRLGameState expansion() {
 
         if (possibleActions.size()==0) {
             return this;
         }
 
-        var newNode = new MCRLState(this, this);
+        var newNode = new MCRLGameState(this, this);
         Card card = possibleActions.get(possibleActions.size()-1);
         possibleActions.remove(possibleActions.size()-1);
         newNode.makeOneMove(card);
@@ -356,7 +357,7 @@ class MCRLState extends State {
     }
 
     ArrayList<Double> simulation() {
-        MCRLState temp = new MCRLState(this, this);
+        MCRLGameState temp = new MCRLGameState(this, this);
         temp.inSim = true;
         while(temp.possibleActions.size()!=0) {
             temp.makeOneMove(temp.possibleActions.get(0)); //possibleActions already shuffled. TODO: is action selection in sim Ran
@@ -377,7 +378,7 @@ class MCRLState extends State {
 
     }
 
-    public boolean equals(MCRLState obj) {
+    public boolean equals(MCRLGameState obj) {
         if (this == obj) return true;
         if (obj == null) return false;
         State that = obj;
@@ -399,7 +400,7 @@ public class MCRLPlayer extends Player {
     public ArrayList<Integer> lastRoundScore;
     public ExhaustTable lastExhaust = new ExhaustTable();
     public LinearModel linearModel = new LinearModel();
-    MCRLState root = null;
+    MCRLGameState root = null;
 
     MCRLPlayer(String id, long timeLimitInMillis) {
         super(id);
@@ -448,7 +449,7 @@ public class MCRLPlayer extends Player {
 
         found: {
             if (root == null) {
-                root = new MCRLState(masterCopy, hand);
+                root = new MCRLGameState(masterCopy, hand);
             } else {
                 for (var c: root.children) {
                     if (c.equals(masterCopy)) {
@@ -462,7 +463,7 @@ public class MCRLPlayer extends Player {
                         }
                     }
                 }
-                root = new MCRLState(masterCopy, hand);
+                root = new MCRLGameState(masterCopy, hand);
             }
         }
         root.parent = null;

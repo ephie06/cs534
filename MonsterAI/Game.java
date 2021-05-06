@@ -14,8 +14,7 @@ class Game {
 	Scanner 			in;						// For scanner input
 	String 				s;						// To store scanner input
 	boolean 			zArmy;					// Keep track so can only happen once per round
-	CardMatrix			handMatrix;
-	
+
 	// Every game must have three players and one deck!
 	// Note: This WILL NOT shuffle the deck or deal the cards here
 	// We ONLY do that upon playing a new game
@@ -39,7 +38,7 @@ class Game {
 	// Call this every time a new game is played to shuffle the deck and clear player hands
 	void initNewGame () {
 		cardsPlayed.shuffleDeck();
-		 cardsPlayed.printDeck(); // debugging to make sure the deck is correct
+		// cardsPlayed.printDeck(); // debugging to make sure the deck is correct
 		// cardsPlayed.checkDeck(); // we need a way to check that all 60 cards are here correctly
 		// clear the hands of all the players (to make sure they're not holding anything already!)
 		for (Player p : playerOrder) { p.clearHand(); }
@@ -51,16 +50,10 @@ class Game {
 		for(int i=0; i<undealt.size(); i++) {
 			System.out.print(undealt.get(i).printCard() + ", ");}
 		System.out.println();
-//		Player testP = playerOrder.get(1);
-//		handMatrix = new CardMatrix(testP.hand);
-//		handMatrix.buildMatrixWithoutHigh();
-//		handMatrix.toVector();
-//		System.out.println(handMatrix);
-//		System.out.println(handMatrix.cardVector);
 		
 		// sort all hands
 		for (Player p : playerOrder) { p.sortHand(); }
-		for (Player p : playerOrder) { p.printHand(); }		// for debugging to check all the hands are valid //TODO: UNCOMMENT
+		for (Player p : playerOrder) { p.printHand(); }		// for debugging to check all the hands are valid
 		cardsPlayed.printDeck();								// for debugging to check all cards have been dealt
 		// pick first player
 		firstPlayer = 0;
@@ -306,8 +299,6 @@ class Game {
 				printRound(firstPlayer); 	// for debugging: use this method to see what cards were played this round
 			}
 
-			playerOrder.get(1).notifyRound(currentRound, firstPlayer);
-			
 			// 1. findTaker() will update who took the cards this round
 			// 2. calculatePoints() will calculate how many points this round consisted of
 			// 3. addPoints() will add those points to the correct player

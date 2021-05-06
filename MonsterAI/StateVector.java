@@ -1,10 +1,10 @@
-/*
+
 import java.util.ArrayList;
 import java.util.Vector;
 
 public class StateVector extends Vector<Integer> {
 
-	*/
+
 /**
 	 * State Vector takes a state and outputs the following stateRep of 27 Integers: How many cards of each
 	 * suit the player has and their mean value rounded down [8], how many cards of each suit have been
@@ -12,7 +12,7 @@ public class StateVector extends Vector<Integer> {
 	 * binaries for p1 and p3 [8], binary can the player beat the current high card in the trick [1], point
 	 * difference between the player and the highest of the p1 and p3 [1]. Suit exhaust tables and point difference
 	 * are currently dependent on the player being in position 2 in the game...
-	 *//*
+	 */
 
 
 	private static final long serialVersionUID = 1L;
@@ -32,20 +32,20 @@ public class StateVector extends Vector<Integer> {
 
 	//TO DO ZOMBIES
 
-	StateVector(MCTSNode state) {
+	StateVector(MCRLGameState state) {
 
-		this.cardsPlayed = state.cardsPlayed;
-		this.currentRound = state.currentRound;
-		this.playerIndex = state.playerIndex;
-		this.hand = state.hand;
-		this.suitExhaustedTable = state.suitExhaustedTable;
-		this.trickPoints = state.calculatePoints();
-		this.exhausts = suitExhaustedTable.toVector();
-		this.playerScores = state.playerScores;
+		cardsPlayed = state.cardsPlayed;
+		currentRound = state.currentRound;
+		playerIndex = state.playerIndex;
+		hand = state.hand;
+		suitExhaustedTable = state.suitExhaustedTable;
+		trickPoints = state.calculatePoints();
+		exhausts = suitExhaustedTable.toVector();
+		playerScores = state.playerScores;
 //		this.roundNumber = state.getRoundNumber();
 
-		highCardTrick();
-		buildVector();
+/*		highCardTrick();
+		buildVector();*/
 
 	}
 
@@ -91,7 +91,7 @@ public class StateVector extends Vector<Integer> {
 
 	}
 
-	int highCardTrick () {
+	int highCardTrick () { //highest value & valid card currently in trick
 		int largestValue = -1;
 		if(currentRound.size() > 0) {
 			Suit firstSuit = currentRound.get(0).getSuit();
@@ -107,7 +107,7 @@ public class StateVector extends Vector<Integer> {
 
 	}
 
-	int highCardInSuit() {
+	int highCardInSuit() { //Highest value & valid card in hand that can be played in trick
 		int largestValue = -1;
 		if(currentRound.size() > 0) {
 			Suit firstSuit = currentRound.get(0).getSuit();
@@ -123,7 +123,7 @@ public class StateVector extends Vector<Integer> {
 
 	}
 
-	int canBeat() {
+	int canBeat() { //can MCRL win the trick?
 		if (highCardInSuit() > highCardTrick()) return 1;
 		else return 0;
 	}
@@ -146,4 +146,4 @@ public class StateVector extends Vector<Integer> {
 
 
 }
-*/
+
