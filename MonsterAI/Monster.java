@@ -4,15 +4,15 @@ import java.io.PrintStream;
 public class Monster {
 
 	static class MultithreadingDemo extends Thread {
-		
+
 		PrintStream data;
 		int times;
-		
+
 		public MultithreadingDemo (int times) {
 			super();
 			this.times = times;
 		}
-		
+
 		public Game oneMatch() {
 			try {
 				// Displaying the thread that is running
@@ -22,9 +22,9 @@ public class Monster {
 				Deck thing = new Deck();
 
 				// Assume this order is clockwise
-				Player p1 = new RandomPlayAI("rp1");
+				Player p1 = new GDPlayer("gd1");
 				Player p2 = new MCRLPlayer("MCRL", 100);
-				Player p3 = new RandomPlayAI("rp3");
+				Player p3 = new GDPlayer("gd3");
 
 				// at the end of every
 				// game, we will have all the cards back in the deck
@@ -55,7 +55,7 @@ public class Monster {
 			}
 			return null;
 		}
-		
+
 		public void run()
 		{
 			try {
@@ -64,18 +64,18 @@ public class Monster {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			
+
 			for (int i=0; i<times; i++) {
 				Game g = oneMatch();
 				if (g!=null) {
-					data.printf("%d, %d, %d, %s\n", 
+					data.printf("%d, %d, %d, %s\n",
 							g.playerOrder.get(0).getPoints(),
 							g.playerOrder.get(1).getPoints(),
 							g.playerOrder.get(2).getPoints(),
 							g.printWinner());
 				}
 			}
-			
+
 			data.close();
 
 		}
@@ -116,9 +116,9 @@ public class Monster {
 			System.out.println("--------------------------------------------\n");
 			round.playNewGame();
 			numberOfGames++;
-		
+
 		}*/
-		
+
 
 	}
 }

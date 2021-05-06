@@ -1,16 +1,19 @@
+/*
 import java.util.ArrayList;
 import java.util.Vector;
 
 public class StateVector extends Vector<Integer> {
 
-	/**
+	*/
+/**
 	 * State Vector takes a state and outputs the following stateRep of 27 Integers: How many cards of each
 	 * suit the player has and their mean value rounded down [8], how many cards of each suit have been
 	 * played and their mean value rounded down [8], point value of the current trick [1], exhaust table
 	 * binaries for p1 and p3 [8], binary can the player beat the current high card in the trick [1], point
 	 * difference between the player and the highest of the p1 and p3 [1]. Suit exhaust tables and point difference
 	 * are currently dependent on the player being in position 2 in the game...
-	 */
+	 *//*
+
 
 	private static final long serialVersionUID = 1L;
 
@@ -51,16 +54,16 @@ public class StateVector extends Vector<Integer> {
 		stateRep = new Vector<Integer>();
 
 		CardMatrix playerMatrix = new CardMatrix(hand);
-		playerMatrix.init();
-		playerMatrix.buildMatrix();
+		playerMatrix.initHigh();
+		playerMatrix.buildMatrixWithHigh();
 		Vector<Integer> playerCards = playerMatrix.toVector();
 
 		// how many cards of each suit the player has, mean value of cards in each suit
 		stateRep.addAll(playerCards);
 
 		CardMatrix cardsPlayedMatrix = new CardMatrix(cardsPlayed.allCards);
-		cardsPlayedMatrix.init();
-		cardsPlayedMatrix.buildMatrix();
+		cardsPlayedMatrix.initHigh();
+		cardsPlayedMatrix.buildMatrixWithHigh();
 		Vector<Integer> playedCards = cardsPlayedMatrix.toVector();
 
 		//how many cards of each suit have already been played, mean value of cards in each suit that have been played
@@ -143,3 +146,4 @@ public class StateVector extends Vector<Integer> {
 
 
 }
+*/

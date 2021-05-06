@@ -117,8 +117,8 @@ class MCRLState extends State {
 
     //Fields tested in LinearModel
     //TODO: Figure out how to make these values dynamic
-    int[]				suitsMissing; //Trolls, Zombies, Unicorns, Fairies, 0 if it is not missing, 1 if it is
-    int[]				suitHighCard; //Trolls, Zombies, Unicorns, Fairies, stores only integer value, 0 if suit is missing
+    int[]				suitsMissing = {0,0,0,0}; //Trolls, Zombies, Unicorns, Fairies, 0 if it is not missing, 1 if it is
+    int[]				suitHighCard= {10,10,10,10}; //Trolls, Zombies, Unicorns, Fairies, stores only integer value, 0 if suit is missing
     Suit                suitOfTrick;
     Value               highestValueCardPlayed; //null if AI is beginning suit
     int					valueOfTrick; //set to 0 if unicorn trick and troll was played, slightly redundant
@@ -133,8 +133,8 @@ class MCRLState extends State {
         rng = ThreadLocalRandom.current();
         fillPossibleActions();
 
-        for(int i : suitsMissing)  i = 0; //TODO: use ExhaustTable to input suit missing values (is this field neccessary?)
-        for(int i : suitHighCard)  i = 10; //TODO: create function to iterate through hand for each card
+        //for(int i : suitsMissing)  i = 0; //TODO: use ExhaustTable to input suit missing values (is this field neccessary?)
+        //for(int i : suitHighCard)  i = 10; //TODO: create function to iterate through hand for each card
         suitOfTrick = getFirstSuit(currentRound);
         highestValueCardPlayed = getHighestValue(currentRound); //TODO: Check if correct
         valueOfTrick = calculatePoints();
