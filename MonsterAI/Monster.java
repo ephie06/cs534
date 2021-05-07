@@ -7,6 +7,7 @@ public class Monster {
 
 		PrintStream data;
 		int times;
+		LinearModel linearModel = new LinearModel();
 
 		public MultithreadingDemo (int times) {
 			super();
@@ -23,7 +24,7 @@ public class Monster {
 
 				// Assume this order is clockwise
 				Player p1 = new GDPlayer("gd1");
-				Player p2 = new MCRLPlayer("MCRL", 100);
+				Player p2 = new MCRLPlayer("MCRL", 100, linearModel);
 				Player p3 = new GDPlayer("gd3");
 
 				// at the end of every
@@ -81,12 +82,14 @@ public class Monster {
 		}
 	}
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws InterruptedException {
 
 		int n = 1; // Number of threads
 		for (int i = 0; i < n; i++) {
 			MultithreadingDemo object = new MultithreadingDemo(1);
 			object.start();
+			object.join();//TODO: May have to delete when running multiple threads
+			System.out.println(object.linearModel.toString());
 		}
 
 /*		System.out.println("Welcome to Monster");

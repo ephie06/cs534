@@ -70,7 +70,7 @@ public class StateVector extends Vector<Integer> {
 		stateRep.addAll(playedCards);
 
 		//point value of current trick
-		stateRep.add(trickPoints);
+		stateRep.add(trickPoints); //TODO: do we want this?
 
 		//exhaust binaries for p1 and p3: this is a problem when player is not in middle position
 		stateRep.addAll(exhausts);

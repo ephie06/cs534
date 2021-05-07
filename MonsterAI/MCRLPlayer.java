@@ -23,12 +23,23 @@ class LinearModel {
 
 
     /**
-     * Randomy assigns staring weights, to begin training
+     * Randomly assigns staring weights, to begin training
      */
     public LinearModel() {
         Random random = new Random();
         stateVectorWeights  = DoubleStream.generate(() -> random.nextDouble()).limit(35).toArray();
         this.bias = random.nextDouble();
+    }
+
+    double getStateVectorValue(Vector<Integer> aStateVector) {
+        double ret = 0;
+        for(int i = 0; i < aStateVector.size(); i++) {
+            ret+= aStateVector.get(i) * this.stateVectorWeights[i];
+        }
+        ret += bias;
+
+        System.out.println(ret);
+        return ret;
     }
 
     /**
@@ -43,20 +54,11 @@ class LinearModel {
         MCRLGameState afterState = state;
         afterState.makeOneMove(move);
         Vector<Integer> afterStateVector = afterState.getStateVector();
-        System.out.println(afterStateVector);
-        System.out.println(Arrays.toString(this.stateVectorWeights));
-
-        double suitOfTrick_double = afterState.currentRound.isEmpty() ? 0 :afterState.getFirstSuit(state.currentRound).ordinal(); //TODO: Fix this it doesnt make sense
-        double highestValueCardPlayed_double = afterState.currentRound.isEmpty() ? 0 : (afterState.currentRound.stream().max(Comparator.comparing(i->i.getValue().ordinal())).get()).getValue().ordinal();
+//        System.out.println(afterStateVector);
+//        System.out.println(Arrays.toString(this.stateVectorWeights));
 
         //plug into linear model
-        double ret = 0;
-        for(int i = 0; i < afterStateVector.size(); i++) {
-            ret+= afterStateVector.get(i) * this.stateVectorWeights[i];
-        }
-        ret += bias;
-
-       return ret;
+        return getStateVectorValue(afterStateVector);
     }
 
     //Deleted GetState fcn here
@@ -68,11 +70,6 @@ class LinearModel {
      * @param rolloutResult - the rollout result(how good the game ended up)(exp from above. our actual score)
      */
     public void updateWeights(Card move, MCRLGameState state, double rolloutResult) {
-        //System.out.println(this);
-
-        //TODO: Figure these values out
-        double suitOfTrick_double = 0;
-        double highestValueCardPlayed_double = 0;
 
         //Gradient descent: w -= epsilon*gradient
         //Gradient: gradient = x(y-(x*w))/shape_of_y
@@ -93,7 +90,38 @@ class LinearModel {
         }
 
         this.bias -= epsilon*difference / FEATURE_NUMBER;
-        //System.out.println(this + "\nend\n\n");
+    }
+
+    public String toString() {
+        int currentWeightPrinted = 0;
+        String[] whatMatrix = new String[]{"playerMatrix", "cardsPlayedMatrix"};
+        String[] matriceWeightNames = new String[]{"UNICORNS - numCardsOfSuit", "UNICORNS - meanOfCards", "UNICORNS - highCard",
+                                                "ZOMBIE - numCardsOfSuit", "ZOMBIE - meanOfCards", "ZOMBIE - highCard",
+                                                "TROLLS - numCardsOfSuit", "TROLLS - meanOfCards", "TROLLS - highCard",
+                                                "FAIRIES - numCardsOfSuit", "FAIRIES - meanOfCards", "FAIRIES - highCard"};
+        StringBuilder s = new StringBuilder();
+        for(int a = 0; a < 2; a++) {
+            s.append(whatMatrix[a] + ": \n");
+            for(int b = 0; b < 12; b++) {
+                s.append(matriceWeightNames[b] + ": " + stateVectorWeights[currentWeightPrinted++] + " ");
+                if(b == 2 || b == 5 || b == 8 || b == 11) s.append("\n");
+            }
+            s.append("\n");
+        }
+
+        s.append("trickPoints: " + stateVectorWeights[currentWeightPrinted++] + "\n");
+        s.append("exhaustTable: ");
+        for(int c = 0; c < 8; c++) {
+            s.append(stateVectorWeights[currentWeightPrinted++] + " ");
+        }
+        s.append("\ncanBeat: " + stateVectorWeights[currentWeightPrinted++]);
+
+        s.append("\nleadingBy: " + stateVectorWeights[currentWeightPrinted]);
+
+        s.append("\n\nBias: " + bias);
+
+
+        return s.toString();
     }
 }
 
@@ -110,15 +138,6 @@ class MCRLGameState extends State {
     ArrayList<MCRLGameState> children = new ArrayList<>();
     boolean inSim = false;
 
-    //Fields tested in LinearModel
-    //TODO: Figure out how to make these values dynamic
-    int[]				suitsMissing = {0,0,0,0}; //Trolls, Zombies, Unicorns, Fairies, 0 if it is not missing, 1 if it is
-    int[]				suitHighCard= {10,10,10,10}; //Trolls, Zombies, Unicorns, Fairies, stores only integer value, 0 if suit is missing
-    Suit                suitOfTrick;
-    Value               highestValueCardPlayed; //null if AI is beginning suit
-    int					valueOfTrick; //set to 0 if unicorn trick and troll was played, slightly redundant
-    int					roundNumber; //1-18 for which part of game we are on
-
 
     MCRLGameState(State secondCopy, ArrayList<Card> hand) {
         super(secondCopy);
@@ -127,14 +146,6 @@ class MCRLGameState extends State {
         updateExhaustTable();
         rng = ThreadLocalRandom.current();
         fillPossibleActions();
-
-        //for(int i : suitsMissing)  i = 0; //TODO: use ExhaustTable to input suit missing values (is this field neccessary?)
-        //for(int i : suitHighCard)  i = 10; //TODO: create function to iterate through hand for each card
-        suitOfTrick = getFirstSuit(currentRound);
-        highestValueCardPlayed = getHighestValue(currentRound); //TODO: Check if correct
-        valueOfTrick = calculatePoints();
-        roundNumber = getRoundNumber();
-
     }
 
 
@@ -207,14 +218,15 @@ class MCRLGameState extends State {
         if (currentRound.size() == 0) return null;
         return currentRound.get(0).getSuit();
     }
-    // Get the first suit that was played this round //TODO: ALREADY WRITTEN IN StateVector
+
+/*    // Get the first suit that was played this round //TODO: ALREADY WRITTEN IN StateVector
     Value getHighestValue(ArrayList<Card> currentRound) {
         if (currentRound.size() == 0) return null;
         Suit fSuit = this.suitOfTrick;
         ArrayList<Card> currentRoundCopy = currentRound;
         currentRoundCopy.removeIf(card -> card.getSuit() != fSuit);
         return currentRoundCopy.stream().max(Comparator.comparing(Card::getValue)).get().getValue();
-    }
+    }*/
 
     //only check currentRound.
     void updateExhaustTable() {
@@ -396,11 +408,12 @@ public class MCRLPlayer extends Player {
     public static PrintStream log;
     public ArrayList<Integer> lastRoundScore;
     public ExhaustTable lastExhaust = new ExhaustTable();
-    public LinearModel linearModel = new LinearModel();
+    public LinearModel linearModel;
     MCRLGameState root = null;
 
-    MCRLPlayer(String id, long timeLimitInMillis) {
+    MCRLPlayer(String id, long timeLimitInMillis, LinearModel aLinearModel) {
         super(id);
+        linearModel = aLinearModel;
         // TODO Auto-generated constructor stub
         this.timeLimitInMillis = timeLimitInMillis;
         lastRoundScore = new ArrayList<>();
