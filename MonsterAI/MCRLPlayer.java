@@ -5,6 +5,7 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
 
 
 //TODO: - Add parent back in for back propigation
@@ -14,15 +15,11 @@ import java.util.stream.Collectors;
 class LinearModel {
 
     //TODO: Change Attributes to fit our part 1
-    public double[] suitsMissing_weight;
-    public double[] suitHighCard_weight;
-    public double suitOfTrick_weight;
-    public double highestValueCardPlayed_weight;
-    public double valueOfTrick_weight;
-    public double roundNumber_weight;
+
+    public double[] stateVectorWeights;
     public double bias;//the bias term
 
-    public static final int FEATURE_NUMBER = 11;
+    public static final int FEATURE_NUMBER = 36;
 
 
     /**
@@ -30,12 +27,7 @@ class LinearModel {
      */
     public LinearModel() {
         Random random = new Random();
-        this.suitsMissing_weight = new double[]{random.nextDouble(), random.nextDouble(), random.nextDouble()};
-        this.suitHighCard_weight = new double[]{random.nextDouble(), random.nextDouble(), random.nextDouble()};
-        this.suitOfTrick_weight = random.nextDouble();
-        this.highestValueCardPlayed_weight = random.nextDouble();
-        this.valueOfTrick_weight = random.nextDouble();
-        this.roundNumber_weight = random.nextDouble();
+        stateVectorWeights  = DoubleStream.generate(() -> random.nextDouble()).limit(35).toArray();
         this.bias = random.nextDouble();
     }
 
@@ -50,19 +42,21 @@ class LinearModel {
         //TODO: Call makeOneMove fcn from NewRolloutPlayer/MCTSPlayer (inputting parameter move)
         MCRLGameState afterState = state;
         afterState.makeOneMove(move);
-        StateVector afterStateVector = new StateVector(state);
+        Vector<Integer> afterStateVector = afterState.getStateVector();
         System.out.println(afterStateVector);
+        System.out.println(Arrays.toString(this.stateVectorWeights));
 
         double suitOfTrick_double = afterState.currentRound.isEmpty() ? 0 :afterState.getFirstSuit(state.currentRound).ordinal(); //TODO: Fix this it doesnt make sense
         double highestValueCardPlayed_double = afterState.currentRound.isEmpty() ? 0 : (afterState.currentRound.stream().max(Comparator.comparing(i->i.getValue().ordinal())).get()).getValue().ordinal();
 
         //plug into linear model
-        double ret =
-                afterState.suitsMissing[0]*this.suitsMissing_weight[0] + afterState.suitsMissing[1]*this.suitsMissing_weight[1] + afterState.suitsMissing[2]*this.suitsMissing_weight[2]
-                        + afterState.suitHighCard[0]*this.suitHighCard_weight[0] + afterState.suitHighCard[1]*this.suitHighCard_weight[1] + afterState.suitHighCard[2]*this.suitHighCard_weight[2]
-                        + suitOfTrick_double*this.suitOfTrick_weight + highestValueCardPlayed_double*this.highestValueCardPlayed_weight
-                        + afterState.valueOfTrick*this.valueOfTrick_weight + afterState.roundNumber*this.roundNumber_weight + bias;
-        return ret;
+        double ret = 0;
+        for(int i = 0; i < afterStateVector.size(); i++) {
+            ret+= afterStateVector.get(i) * this.stateVectorWeights[i];
+        }
+        ret += bias;
+
+       return ret;
     }
 
     //Deleted GetState fcn here
@@ -88,16 +82,15 @@ class LinearModel {
 
         //TODO: Call makeOneMove fcn from NewRolloutPlayer/MCTSPlayer (inputting parameter move)
         MCRLGameState afterState = state;
+        afterState.makeOneMove(move);
+        Vector<Integer> afterStateVector = afterState.getStateVector();
         //System.out.println(difference + " = " + yhat + " - " + rolloutResult);
 
         //update weights to get closer to actual values
-        for(int i1 = 0; i1 < 3; i1++) this.suitsMissing_weight[i1] -= epsilon*(afterState.suitsMissing[i1]*difference) / FEATURE_NUMBER;
-        for(int i2 = 0; i2 < 3; i2++) this.suitHighCard_weight[i2] -= epsilon*(afterState.suitHighCard[i2]*difference) / FEATURE_NUMBER;
 
-        this.suitOfTrick_weight -= epsilon*(suitOfTrick_double*difference) / FEATURE_NUMBER;
-        this.highestValueCardPlayed_weight -= epsilon*(highestValueCardPlayed_double*difference) / FEATURE_NUMBER;
-        this.valueOfTrick_weight -= epsilon*(afterState.valueOfTrick*difference) / FEATURE_NUMBER;
-        this.roundNumber_weight -= epsilon*(afterState.roundNumber*difference) / FEATURE_NUMBER;
+        for(int i = 0; i < afterStateVector.size(); i++) {
+            this.stateVectorWeights[i] -= epsilon*(afterStateVector.get(i)*difference) / FEATURE_NUMBER;
+        }
 
         this.bias -= epsilon*difference / FEATURE_NUMBER;
         //System.out.println(this + "\nend\n\n");
@@ -152,6 +145,10 @@ class MCRLGameState extends State {
         updateExhaustTable();
         rng = ThreadLocalRandom.current();
         fillPossibleActions();
+    }
+
+    Vector<Integer> getStateVector() {
+        return new StateVector(this).stateRep;
     }
 
 /*    public double UCB95() {

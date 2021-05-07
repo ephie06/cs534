@@ -44,8 +44,8 @@ public class StateVector extends Vector<Integer> {
 		playerScores = state.playerScores;
 //		this.roundNumber = state.getRoundNumber();
 
-/*		highCardTrick();
-		buildVector();*/
+		highCardTrick();
+		buildVector();
 
 	}
 
