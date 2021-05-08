@@ -88,18 +88,18 @@ class LinearModel {
     //Deleted GetState fcn here
 
     public void updateWeights() {
-        ArrayList<Vector<Integer>> wdwdwindw = new ArrayList<>();
+        ArrayList<Vector<Integer>> stateVectorSet = new ArrayList<>();
         for(int a = 0; a < seenStates.size(); a++) {
             MCRLGameState state = seenStates.get(a);
             state.makeOneMove(actionsTook.get(a));
-            wdwdwindw.add(state.getStateVector());
+            stateVectorSet.add(state.getStateVector());
         }
 
         MCRLGameState lastState = seenStates.get(seenStates.size() - 1);
         lastState.makeOneMove(actionsTook.get(actionsTook.size() - 1));
         Vector<Integer> rolloutResult = lastState.getStateVector();
 
-        for(var stateVector : wdwdwindw) updateWeightsSingle(stateVector, getStateVectorValue(rolloutResult));
+        for(var stateVector : stateVectorSet) updateWeightsSingle(stateVector, getStateVectorValue(rolloutResult));
         newVectorSet();
     }
 
