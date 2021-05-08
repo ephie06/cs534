@@ -19,7 +19,7 @@ class Game {
 	// Note: This WILL NOT shuffle the deck or deal the cards here
 	// We ONLY do that upon playing a new game
 	Game (Deck deck, Player p1, Player p2, Player p3) {
-		debug = true;
+		debug = false;
 		playerOrder = new ArrayList<Player>();
 		playerOrder.add(p1);
 		playerOrder.add(p2);
@@ -224,7 +224,7 @@ class Game {
 		int index = -1;
 		for (int i = 0; i < playerOrder.size(); i++) {
 			if (zombieCount.get(i) >= 12) {
-				System.out.println("\n" + playerOrder.get(i).getName() + " has a Zombie Army! Opponents score -20");
+				//System.out.println("\n" + playerOrder.get(i).getName() + " has a Zombie Army! Opponents score -20");
 				index = i;
 				zArmy = true; // stops from being called in subsequent tricks
 			}
@@ -274,7 +274,7 @@ class Game {
 					validPlay = checkRound(playedCard, index);
 					// If the card was not valid, put it back in the hand and sort the hand (this might be SLOW)
 					if (!validPlay) {
-						System.out.println("This was an invalid play. Please pick a valid card.");
+						//System.out.println("This was an invalid play. Please pick a valid card.");
 						playerOrder.get(index).addToHand(playedCard);
 						playerOrder.get(index).sortHand();
 						//break;

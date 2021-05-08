@@ -15,7 +15,7 @@ import java.util.stream.DoubleStream;
 class LinearModel {
 
     //create an object of SingleObject
-    private static LinearModel instance = new LinearModel();
+    private static final LinearModel instance = new LinearModel();
 
     //make the constructor private so that this class cannot be
     //instantiated
@@ -41,7 +41,7 @@ class LinearModel {
     /**
      * Randomly assigns staring weights, to begin training
      */
-    public LinearModel() {
+    private LinearModel() {
         Random random = new Random();
         stateVectorWeights  = DoubleStream.generate(() -> random.nextDouble()).limit(27).toArray();
         this.bias = random.nextDouble();
@@ -137,9 +137,9 @@ class LinearModel {
             s.append(whatMatrix[a] + ": \n");
             for(int b = 0; b < 8; b++) {
                 s.append(matriceWeightNames[b] + ": " + stateVectorWeights[currentWeightPrinted++] + " ");
-                if(b == 2 || b == 5) s.append("\n");
+                if(b == 1 || b == 3 || b == 5) s.append("\n");
             }
-            s.append("\n");
+            s.append("\n\n");
         }
 
         s.append("trickPoints: " + stateVectorWeights[currentWeightPrinted++] + "\n");
@@ -527,7 +527,7 @@ public class MCRLPlayer extends Player {
         root.parent = null;
         root.suitExhaustedTable.logicOr(lastExhaust);
         lastExhaust = root.suitExhaustedTable;
-        System.out.println(lastExhaust.toString());
+        //System.out.println(lastExhaust.toString());
 
         //long start = System.currentTimeMillis();
 

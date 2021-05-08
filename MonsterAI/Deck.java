@@ -32,7 +32,7 @@ public class Deck {
 	// generate deck for the first time; can only be used once; should never be called outside constructor
 	void initDeck () {
 		if (initCounter) {
-			System.out.println("The deck has been initialized.");
+			//System.out.println("The deck has been initialized.");
 			for (Suit sui: Suit.values()) {
 				for (Value val: Value.values()) {
 					allCards.add(new Card(sui, val));
@@ -53,7 +53,7 @@ public class Deck {
 	// for debugging: print out entire deck
 	void printDeck() {
 		for(Card car: allCards) { System.out.print(car.printCard() + " "); }
-		System.out.println("\nSize of Deck: " + allCards.size() + "\n");
+		//System.out.println("\nSize of Deck: " + allCards.size() + "\n");
 	}
 
 	// remove and return the top card, to place it in a hand (used in dealing, which is in Game)
