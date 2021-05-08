@@ -7,7 +7,7 @@ public class Monster {
 
 		PrintStream data;
 		int times;
-		LinearModel linearModel = LinearModel.getInstance();
+		LinearModel linearModel = LinearModel.INSTANCE;
 
 		public MultithreadingDemo (int times) {
 			super();
@@ -24,7 +24,7 @@ public class Monster {
 
 				// Assume this order is clockwise
 				Player p1 = new GDPlayer("gd1");
-				Player p2 = new MCRLPlayer("MCRL", 100, linearModel);
+				Player p2 = new MCRLPlayer("MCRL", 100, 1, linearModel);
 				Player p3 = new GDPlayer("gd3");
 
 				// at the end of every
@@ -47,7 +47,6 @@ public class Monster {
 					numberOfGames++;
 
 				}
-				linearModel.updateWeights();
 				return round;
 			}
 			catch (Exception e) {

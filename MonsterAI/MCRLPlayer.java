@@ -1,5 +1,11 @@
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 import java.io.PrintStream;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -12,28 +18,15 @@ import java.util.stream.DoubleStream;
 //      - figure out how LinearModel is ran/used
 //      - figure out rl stuff
 
-class LinearModel {
-
-    //create an object of SingleObject
-    private static final LinearModel instance = new LinearModel();
-
-    //make the constructor private so that this class cannot be
-    //instantiated
-
-    //Get the only object available
-    public static LinearModel getInstance(){
-        return instance;
-    }
+enum LinearModel {
+	INSTANCE;
 
     //TODO: Change Attributes to fit our part 1
-
-    public ArrayList<MCRLGameState> seenStates;
-    public ArrayList<Card> actionsTook;
-    //public ArrayList<Vector<Integer>> statesVisited;
-
-
+    
     private double[] stateVectorWeights;
     private double bias;//the bias term
+    
+    private int feature_count; // how many states are learned by this model. We need this to track the model between different runs. 
 
     private static final int FEATURE_NUMBER = 28;
 
@@ -45,15 +38,38 @@ class LinearModel {
         Random random = new Random();
         stateVectorWeights  = DoubleStream.generate(() -> random.nextDouble()).limit(27).toArray();
         this.bias = random.nextDouble();
-        seenStates = new ArrayList<>();
-        actionsTook = new ArrayList<>();
     }
 
-    void newVectorSet() {
-        seenStates = new ArrayList<>();
-        actionsTook = new ArrayList<>();
-        //statesVisited = new ArrayList<>();
+    void saveWeightsToFile(String filepath) {
+    	try {
+    		FileOutputStream fos = new FileOutputStream(filepath);
+    		ObjectOutputStream oos = new ObjectOutputStream(fos);
+    		oos.writeObject(this.stateVectorWeights);
+    		oos.writeObject(this.feature_count);
+    		oos.close();
+    		fos.close();
+    	} catch (IOException ioe) {
+    		ioe.printStackTrace();
+    	}
     }
+    
+    void loadWeightsFromFile(String filepath) {
+		try {
+			FileInputStream fis;
+			fis = new FileInputStream(filepath);
+			ObjectInputStream ois = new ObjectInputStream(fis);
+	
+	        this.stateVectorWeights = (double[]) ois.readObject();
+	        this.feature_count = (int) ois.readObject();
+	        ois.close();
+		    fis.close();
+		} catch (IOException | ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
+
+    }
+   
 
     double getStateVectorValue(Vector<Integer> aStateVector) {
         double ret = 0;
@@ -63,44 +79,6 @@ class LinearModel {
         ret += bias;
         //System.out.println(ret);
         return ret;
-    }
-
-    /**
-     * Get the predicted value of the game state and move
-     * @param move the card the AI played
-     * @param state the state we are currently playing
-     * @return the predicted value of the state move(how good that move is)(exp. just our score)
-     */
-    public double makePrediction(Card move, MCRLGameState state) {
-
-        //TODO: Call makeOneMove fcn from NewRolloutPlayer/MCTSPlayer (inputting parameter move)
-        MCRLGameState afterState = state;
-        afterState.makeOneMove(move);
-        Vector<Integer> afterStateVector = afterState.getStateVector();
-        //TODO: Simulation call was here, but stateVector values should represent what occurs at end of game
-//        System.out.println(afterStateVector);
-//        System.out.println(Arrays.toString(this.stateVectorWeights));
-
-        //plug into linear model
-        return getStateVectorValue(afterStateVector);
-    }
-
-    //Deleted GetState fcn here
-
-    public void updateWeights() {
-        ArrayList<Vector<Integer>> wdwdwindw = new ArrayList<>();
-        for(int a = 0; a < seenStates.size(); a++) {
-            MCRLGameState state = seenStates.get(a);
-            state.makeOneMove(actionsTook.get(a));
-            wdwdwindw.add(state.getStateVector());
-        }
-
-        MCRLGameState lastState = seenStates.get(seenStates.size() - 1);
-        lastState.makeOneMove(actionsTook.get(actionsTook.size() - 1));
-        Vector<Integer> rolloutResult = lastState.getStateVector();
-
-        for(var stateVector : wdwdwindw) updateWeightsSingle(stateVector, getStateVectorValue(rolloutResult));
-        newVectorSet();
     }
 
     /**
@@ -162,7 +140,7 @@ class MCRLGameState extends State {
 
     //Fields not included from MCTS: visited,total value, numObserved, children, parent, prevStep
 
-    static int targetIndex = 1; // the player index that the hand belong to (the player we want it to win)
+    int targetIndex = 1; // the player index that the hand belong to (the player we want it to win)
     double stateValue = 0;
     ArrayList<Card> hand;
     CopyOnWriteArrayList<Card> possibleActions = new CopyOnWriteArrayList<>();//TODO: Terrible fix, find out how to iterate over actions correctly
@@ -170,11 +148,14 @@ class MCRLGameState extends State {
     MCRLGameState parent = null;
     ArrayList<MCRLGameState> children = new ArrayList<>();
     boolean inSim = false;
+    MCRLPlayer parentPlayer;
 
 
-    MCRLGameState(State secondCopy, ArrayList<Card> hand) {
+    MCRLGameState(State secondCopy, ArrayList<Card> hand, MCRLPlayer parentPlayer) {
         super(secondCopy);
         this.hand = new ArrayList<>(hand);
+        this.parentPlayer = parentPlayer;
+        this.targetIndex = parentPlayer.targetIndex;
         suitExhaustedTable = new ExhaustTable();
         updateExhaustTable();
         rng = ThreadLocalRandom.current();
@@ -182,9 +163,11 @@ class MCRLGameState extends State {
     }
 
 
-    MCRLGameState(MCRLGameState secondCopy, MCRLGameState parent) {
+    MCRLGameState(MCRLGameState secondCopy, MCRLGameState parent, MCRLPlayer parentPlayer) {
         super(secondCopy);
         this.hand = new ArrayList<>(secondCopy.hand);
+        this.parentPlayer = parentPlayer;
+        this.targetIndex = parentPlayer.targetIndex;
         suitExhaustedTable = secondCopy.suitExhaustedTable.deepCopy();
         updateExhaustTable();
         rng = ThreadLocalRandom.current();
@@ -379,7 +362,7 @@ class MCRLGameState extends State {
             return this;
         }
 
-        var newNode = new MCRLGameState(this, this);
+        var newNode = new MCRLGameState(this, this, this.parentPlayer);
         Card card = possibleActions.get(possibleActions.size()-1);
         possibleActions.remove(possibleActions.size()-1);
         newNode.makeOneMove(card);
@@ -399,7 +382,7 @@ class MCRLGameState extends State {
     }
 
     MCRLGameState simulation(LinearModel linearModel) {
-        MCRLGameState temp = new MCRLGameState(this, this);
+        MCRLGameState temp = new MCRLGameState(this, this, this.parentPlayer);
         temp.inSim = true;
         while(temp.possibleActions.size()!=0) {
             temp.makeOneMove(temp.bestPossibleAction(linearModel)); //possibleActions already shuffled. TODO: is action selection in sim Ran
@@ -438,7 +421,7 @@ class MCRLGameState extends State {
         Card bestMove = null;
         double highestScore = Double.NEGATIVE_INFINITY;
         for(var card : possibleActions) {
-            double predictedScore = linearModel.makePrediction(card, this); //lookahead to afterstate, choose 'best' afterstate
+            double predictedScore = parentPlayer.makePrediction(card, this); //lookahead to afterstate, choose 'best' afterstate
             if (predictedScore > highestScore) {
                 bestMove = card;
                 highestScore = predictedScore;
@@ -458,16 +441,78 @@ public class MCRLPlayer extends Player {
     public ExhaustTable lastExhaust = new ExhaustTable();
     public LinearModel linearModel;
     MCRLGameState root = null;
+    int targetIndex = 0;
+    
+    public ArrayList<MCRLGameState> seenStates;
+    public ArrayList<Card> actionsTook;
+    //public ArrayList<Vector<Integer>> statesVisited;
 
-    MCRLPlayer(String id, long timeLimitInMillis, LinearModel aLinearModel) {
+    @Override
+	public void notifyGameOver(int winner) {
+    	if (winner==targetIndex) {
+    		updateWeights(1);
+    	} else {
+    		updateWeights(0);
+    	}
+	}
+
+    
+    void newVectorSet() {
+        seenStates = new ArrayList<>();
+        actionsTook = new ArrayList<>();
+        //statesVisited = new ArrayList<>();
+    }
+    
+    /**
+     * Get the predicted value of the game state and move
+     * @param move the card the AI played
+     * @param state the state we are currently playing
+     * @return the predicted value of the state move(how good that move is)(exp. just our score)
+     */
+    public double makePrediction(Card move, MCRLGameState state) {
+
+        //TODO: Call makeOneMove fcn from NewRolloutPlayer/MCTSPlayer (inputting parameter move)
+        MCRLGameState afterState = state;
+        afterState.makeOneMove(move);
+        Vector<Integer> afterStateVector = afterState.getStateVector();
+        //TODO: Simulation call was here, but stateVector values should represent what occurs at end of game
+//        System.out.println(afterStateVector);
+//        System.out.println(Arrays.toString(this.stateVectorWeights));
+
+        //plug into linear model
+        return LinearModel.INSTANCE.getStateVectorValue(afterStateVector);
+    }
+    
+    public void updateWeights(int reward) {
+        ArrayList<Vector<Integer>> wdwdwindw = new ArrayList<>();
+        for(int a = 0; a < seenStates.size(); a++) {
+            MCRLGameState state = seenStates.get(a);
+            state.makeOneMove(actionsTook.get(a));
+            wdwdwindw.add(state.getStateVector());
+        }
+//
+//        MCRLGameState lastState = seenStates.get(seenStates.size() - 1);
+//        lastState.makeOneMove(actionsTook.get(actionsTook.size() - 1));
+//        Vector<Integer> rolloutResult = lastState.getStateVector();
+
+        for(var stateVector : seenStates) {
+//        	LinearModel.INSTANCE.updateWeightsSingle(stateVector, LinearModel.INSTANCE.getStateVectorValue(rolloutResult));
+        	LinearModel.INSTANCE.updateWeightsSingle(stateVector.getStateVector(), reward);
+        }
+        newVectorSet();
+    }
+    
+    MCRLPlayer(String id, long timeLimitInMillis, int playerIndex, LinearModel aLinearModel) {
         super(id);
         linearModel = aLinearModel;
+        this.targetIndex = playerIndex;
         // TODO Auto-generated constructor stub
         this.timeLimitInMillis = timeLimitInMillis;
         lastRoundScore = new ArrayList<>();
         lastRoundScore.add(0);
         lastRoundScore.add(0);
         lastRoundScore.add(0);
+        newVectorSet();
         try {
             log = new PrintStream(new File("log/log.txt"));
         } catch (FileNotFoundException e) {
@@ -482,7 +527,7 @@ public class MCRLPlayer extends Player {
     }
 
     @Override
-    void notifyRound(ArrayList<Card> currentRound, int firstPlayer) {
+    public void notifyRound(ArrayList<Card> currentRound, int firstPlayer) {
         if (currentRound.size()>1) {
             Suit firstSuit = getFirstSuit(currentRound);
             for (int i=1; i<currentRound.size(); i++) {
@@ -505,25 +550,8 @@ public class MCRLPlayer extends Player {
             masterCopy.playerScores.set(i, masterCopy.playerScores.get(i) - lastRoundScore.get(i));
         }
 
-        found: {
-            if (root == null) {
-                root = new MCRLGameState(masterCopy, hand);
-            } else {
-                for (var c: root.children) {
-                    if (c.equals(masterCopy)) {
-                        root = c;
-                        break found;
-                    }
-                    for (var d: c.children) {
-                        if (d.equals(masterCopy)) {
-                            root = d;
-                            break found;
-                        }
-                    }
-                }
-                root = new MCRLGameState(masterCopy, hand);
-            }
-        }
+        root = new MCRLGameState(masterCopy, hand,this);
+
         root.parent = null;
         root.suitExhaustedTable.logicOr(lastExhaust);
         lastExhaust = root.suitExhaustedTable;
@@ -534,8 +562,8 @@ public class MCRLPlayer extends Player {
         Card bestMove = root.bestPossibleAction(linearModel);
 
 //		MCTSDebugger.dump(root, log);
-        linearModel.seenStates.add(root);
-        linearModel.actionsTook.add(bestMove);
+        seenStates.add(root);
+        actionsTook.add(bestMove);
         hand.remove(bestMove);
         return bestMove;
     }

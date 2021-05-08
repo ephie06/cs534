@@ -318,7 +318,10 @@ class Game {
 			}
 			
 			if (gameOver()) {
-				printWinner();
+				int winner = printWinner();
+				for (var p: playerOrder) {
+					p.notifyGameOver(winner);
+				}
 				break;
 			}
 

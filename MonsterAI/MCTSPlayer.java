@@ -343,7 +343,7 @@ public class MCTSPlayer extends Player {
 	}
 
 	@Override
-	void notifyRound(ArrayList<Card> currentRound, int firstPlayer) {
+	public void notifyRound(ArrayList<Card> currentRound, int firstPlayer) {
 		if (currentRound.size()>1) {
 			Suit firstSuit = getFirstSuit(currentRound);
 			for (int i=1; i<currentRound.size(); i++) {
