@@ -7,7 +7,7 @@ public class Monster {
 
 		PrintStream data;
 		int times;
-		LinearModel linearModel = new LinearModel();
+		LinearModel linearModel = LinearModel.getInstance();
 
 		public MultithreadingDemo (int times) {
 			super();
@@ -47,6 +47,7 @@ public class Monster {
 					numberOfGames++;
 
 				}
+				linearModel.updateWeights();
 				return round;
 			}
 			catch (Exception e) {
@@ -84,13 +85,13 @@ public class Monster {
 
 	public static void main(String[] args) throws InterruptedException {
 
-		int n = 1; // Number of threads
+		int n = 2; // Number of threads
+		MultithreadingDemo object = new MultithreadingDemo(1);
 		for (int i = 0; i < n; i++) {
-			MultithreadingDemo object = new MultithreadingDemo(1);
 			object.start();
 			object.join();//TODO: May have to delete when running multiple threads
-			System.out.println(object.linearModel.toString());
 		}
+		System.out.println(object.linearModel.toString());
 
 /*		System.out.println("Welcome to Monster");
 

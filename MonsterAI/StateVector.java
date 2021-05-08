@@ -2,7 +2,7 @@
 import java.util.ArrayList;
 import java.util.Vector;
 
-public class StateVector extends Vector<Integer> {
+public class StateVector {
 
 
 /**
@@ -54,16 +54,16 @@ public class StateVector extends Vector<Integer> {
 		stateRep = new Vector<Integer>();
 
 		CardMatrix playerMatrix = new CardMatrix(hand);
-		playerMatrix.initHigh();
-		playerMatrix.buildMatrixWithHigh();
+		playerMatrix.init();
+		playerMatrix.buildMatrix();
 		Vector<Integer> playerCards = playerMatrix.toVector();
 
 		// how many cards of each suit the player has, mean value of cards in each suit
 		stateRep.addAll(playerCards);
 
 		CardMatrix cardsPlayedMatrix = new CardMatrix(cardsPlayed.allCards);
-		cardsPlayedMatrix.initHigh();
-		cardsPlayedMatrix.buildMatrixWithHigh();
+		cardsPlayedMatrix.init();
+		cardsPlayedMatrix.buildMatrix();
 		Vector<Integer> playedCards = cardsPlayedMatrix.toVector();
 
 		//how many cards of each suit have already been played, mean value of cards in each suit that have been played

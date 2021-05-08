@@ -14,12 +14,28 @@ import java.util.stream.DoubleStream;
 
 class LinearModel {
 
+    //create an object of SingleObject
+    private static LinearModel instance = new LinearModel();
+
+    //make the constructor private so that this class cannot be
+    //instantiated
+
+    //Get the only object available
+    public static LinearModel getInstance(){
+        return instance;
+    }
+
     //TODO: Change Attributes to fit our part 1
 
-    public double[] stateVectorWeights;
-    public double bias;//the bias term
+    public ArrayList<MCRLGameState> seenStates;
+    public ArrayList<Card> actionsTook;
+    //public ArrayList<Vector<Integer>> statesVisited;
 
-    public static final int FEATURE_NUMBER = 36;
+
+    private double[] stateVectorWeights;
+    private double bias;//the bias term
+
+    private static final int FEATURE_NUMBER = 28;
 
 
     /**
@@ -27,8 +43,16 @@ class LinearModel {
      */
     public LinearModel() {
         Random random = new Random();
-        stateVectorWeights  = DoubleStream.generate(() -> random.nextDouble()).limit(35).toArray();
+        stateVectorWeights  = DoubleStream.generate(() -> random.nextDouble()).limit(27).toArray();
         this.bias = random.nextDouble();
+        seenStates = new ArrayList<>();
+        actionsTook = new ArrayList<>();
+    }
+
+    void newVectorSet() {
+        seenStates = new ArrayList<>();
+        actionsTook = new ArrayList<>();
+        //statesVisited = new ArrayList<>();
     }
 
     double getStateVectorValue(Vector<Integer> aStateVector) {
@@ -37,8 +61,7 @@ class LinearModel {
             ret+= aStateVector.get(i) * this.stateVectorWeights[i];
         }
         ret += bias;
-
-        System.out.println(ret);
+        //System.out.println(ret);
         return ret;
     }
 
@@ -54,6 +77,7 @@ class LinearModel {
         MCRLGameState afterState = state;
         afterState.makeOneMove(move);
         Vector<Integer> afterStateVector = afterState.getStateVector();
+        //TODO: Simulation call was here, but stateVector values should represent what occurs at end of game
 //        System.out.println(afterStateVector);
 //        System.out.println(Arrays.toString(this.stateVectorWeights));
 
@@ -63,48 +87,57 @@ class LinearModel {
 
     //Deleted GetState fcn here
 
+    public void updateWeights() {
+        ArrayList<Vector<Integer>> wdwdwindw = new ArrayList<>();
+        for(int a = 0; a < seenStates.size(); a++) {
+            MCRLGameState state = seenStates.get(a);
+            state.makeOneMove(actionsTook.get(a));
+            wdwdwindw.add(state.getStateVector());
+        }
+
+        MCRLGameState lastState = seenStates.get(seenStates.size() - 1);
+        lastState.makeOneMove(actionsTook.get(actionsTook.size() - 1));
+        Vector<Integer> rolloutResult = lastState.getStateVector();
+
+        for(var stateVector : wdwdwindw) updateWeightsSingle(stateVector, getStateVectorValue(rolloutResult));
+        newVectorSet();
+    }
+
     /**
      * Updates the weights based on the result of the hand rollout
-     * @param move - the card the AI played
-     * @param state - the original game
+     //* @param move - the card the AI played
+     * @param aStateVector - how our AI thought the game would end up
      * @param rolloutResult - the rollout result(how good the game ended up)(exp from above. our actual score)
      */
-    public void updateWeights(Card move, MCRLGameState state, double rolloutResult) {
+    public void updateWeightsSingle(Vector<Integer> aStateVector, double rolloutResult) {
 
         //Gradient descent: w -= epsilon*gradient
         //Gradient: gradient = x(y-(x*w))/shape_of_y
         double epsilon = 0.0001;//step size
-        double yhat = makePrediction(move, state);//get the predicted value
+        double yhat = getStateVectorValue(aStateVector);//get the predicted value
         double difference = yhat - rolloutResult;//get the difference between predicted and result
 
-        //TODO: Call makeOneMove fcn from NewRolloutPlayer/MCTSPlayer (inputting parameter move)
-        MCRLGameState afterState = state;
-        afterState.makeOneMove(move);
-        Vector<Integer> afterStateVector = afterState.getStateVector();
-        //System.out.println(difference + " = " + yhat + " - " + rolloutResult);
+        for(int i = 0; i < aStateVector.size(); i++) {
+            this.stateVectorWeights[i] -= epsilon*(aStateVector.get(i)*difference) / FEATURE_NUMBER;
 
-        //update weights to get closer to actual values
-
-        for(int i = 0; i < afterStateVector.size(); i++) {
-            this.stateVectorWeights[i] -= epsilon*(afterStateVector.get(i)*difference) / FEATURE_NUMBER;
         }
-
         this.bias -= epsilon*difference / FEATURE_NUMBER;
+
     }
 
     public String toString() {
         int currentWeightPrinted = 0;
         String[] whatMatrix = new String[]{"playerMatrix", "cardsPlayedMatrix"};
-        String[] matriceWeightNames = new String[]{"UNICORNS - numCardsOfSuit", "UNICORNS - meanOfCards", "UNICORNS - highCard",
-                                                "ZOMBIE - numCardsOfSuit", "ZOMBIE - meanOfCards", "ZOMBIE - highCard",
-                                                "TROLLS - numCardsOfSuit", "TROLLS - meanOfCards", "TROLLS - highCard",
-                                                "FAIRIES - numCardsOfSuit", "FAIRIES - meanOfCards", "FAIRIES - highCard"};
+        String[] matriceWeightNames = new String[]{"UNICORNS - numCardsOfSuit", "UNICORNS - meanOfCards",
+                                                "ZOMBIE - numCardsOfSuit", "ZOMBIE - meanOfCards",
+                                                "TROLLS - numCardsOfSuit", "TROLLS - meanOfCards",
+                                                "FAIRIES - numCardsOfSuit", "FAIRIES - meanOfCards"};
         StringBuilder s = new StringBuilder();
         for(int a = 0; a < 2; a++) {
             s.append(whatMatrix[a] + ": \n");
-            for(int b = 0; b < 12; b++) {
+            for(int b = 0; b < 8; b++) {
                 s.append(matriceWeightNames[b] + ": " + stateVectorWeights[currentWeightPrinted++] + " ");
-                if(b == 2 || b == 5 || b == 8 || b == 11) s.append("\n");
+                if(b == 2 || b == 5) s.append("\n");
             }
             s.append("\n");
         }
@@ -365,13 +398,13 @@ class MCRLGameState extends State {
         }
     }
 
-    ArrayList<Double> simulation() {
+    MCRLGameState simulation(LinearModel linearModel) {
         MCRLGameState temp = new MCRLGameState(this, this);
         temp.inSim = true;
         while(temp.possibleActions.size()!=0) {
-            temp.makeOneMove(temp.possibleActions.get(0)); //possibleActions already shuffled. TODO: is action selection in sim Ran
+            temp.makeOneMove(temp.bestPossibleAction(linearModel)); //possibleActions already shuffled. TODO: is action selection in sim Ran
         }
-        return temp.terminalValue();
+        return temp;
     }
 
     public boolean equals(State obj) {
@@ -399,6 +432,21 @@ class MCRLGameState extends State {
                 && currentRound.equals(that.currentRound)
                 && hand.equals(obj.hand)
                 && cardsPlayed.invertDeck.equals(that.cardsPlayed.invertDeck);
+    }
+
+    Card bestPossibleAction(LinearModel linearModel) {
+        Card bestMove = null;
+        double highestScore = Double.NEGATIVE_INFINITY;
+        for(var card : possibleActions) {
+            double predictedScore = linearModel.makePrediction(card, this); //lookahead to afterstate, choose 'best' afterstate
+            if (predictedScore > highestScore) {
+                bestMove = card;
+                highestScore = predictedScore;
+            }
+        }
+        if (bestMove == null) throw new NullPointerException("no cards in possible actions to select");
+        //linearModel.seenStates.add(this);
+        return bestMove;
     }
 }
 
@@ -483,17 +531,12 @@ public class MCRLPlayer extends Player {
 
         //long start = System.currentTimeMillis();
 
-        Card bestMove = null;
-        double highestScore = 0;
-        for(var card : root.possibleActions) {
-            double predictedScore = linearModel.makePrediction(card, root);
-            if (predictedScore > highestScore) bestMove = card;
-            highestScore = predictedScore;
-        }
+        Card bestMove = root.bestPossibleAction(linearModel);
 
 //		MCTSDebugger.dump(root, log);
+        linearModel.seenStates.add(root);
+        linearModel.actionsTook.add(bestMove);
         hand.remove(bestMove);
         return bestMove;
     }
-
 }
