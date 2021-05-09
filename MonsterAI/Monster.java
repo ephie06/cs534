@@ -24,9 +24,9 @@ public class Monster {
 				Deck thing = new Deck();
 
 				// Assume this order is clockwise
-				Player p1 = new RandomPlayAI("m");
-				Player p2 = new MCRLPlayer("MCRL", 100, 1, true);
-				Player p3 = new RandomPlayAI("om");
+				Player p1 = new RLRolloutPlayer("Roll1", 500, 0, false);
+				Player p2 = new RLRolloutPlayer("Roll2", 500, 1, false);
+				Player p3 = new RLRolloutPlayer("Roll3", 500, 2, false);
 
 				// at the end of every
 				// game, we will have all the cards back in the deck
@@ -35,7 +35,7 @@ public class Monster {
 				// Play Multiple Games
 				int numberOfGames = 1;
 				Game round = new Game(thing, p1, p2, p3);
-//				round.debug = true;
+				round.debug = true;
 				while (!round.gameOver()) {
 /*					System.out.println("\n--------------------------------------------");
 					System.out.println("--------------------------------------------");
@@ -85,11 +85,11 @@ public class Monster {
 	}
 
 	public static void main(String[] args) throws InterruptedException {
-        LinearModel.INSTANCE.loadWeightsFromFile("model_200000.obj");
+//        LinearModel.INSTANCE.loadWeightsFromFile("model_200000.obj");
 		int n = 10; // Number of threads
 		ArrayList<MultithreadingDemo> ths = new ArrayList<>();
 		for (int i = 0; i < n; i++) {
-			MultithreadingDemo object = new MultithreadingDemo(20000);
+			MultithreadingDemo object = new MultithreadingDemo(10);
 			object.start();
 			ths.add(object);
 		}
@@ -98,7 +98,7 @@ public class Monster {
 		}
 		
 		System.out.println(LinearModel.INSTANCE.toString());
-		LinearModel.INSTANCE.saveWeightsToFile("model_400000.obj");
+		LinearModel.INSTANCE.saveWeightsToFile("model_rollout_100.obj");
 /*		System.out.println("Welcome to Monster");
 
 		// Initalize the deck of cards
