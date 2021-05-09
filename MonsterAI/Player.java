@@ -105,6 +105,10 @@ abstract class Player {
 	public void notifyGameOver(int winner) {
 		return;
 	}
+	
+	public void notifyHandOver(ArrayList<Integer> scores) {
+		return;
+	}
 
 	// Given any sort of player, make a decision to play a card
 	// Pass in a copy of the game state for full playout functionality

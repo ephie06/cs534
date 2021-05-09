@@ -46,19 +46,19 @@ class Game {
 		for (int i = 0; i < 18; i++) { for (Player p : playerOrder) { p.addToHand ( cardsPlayed.drawTop() ); } }
 		//6 undealt cards
 		for(int i=0; i<6; i++) { undealt.add(cardsPlayed.drawTop()); }
-		System.out.print("Undealt: ");
-		for(int i=0; i<undealt.size(); i++) {
-			System.out.print(undealt.get(i).printCard() + ", ");}
-		System.out.println();
+//		System.out.print("Undealt: ");
+//		for(int i=0; i<undealt.size(); i++) {
+//			System.out.print(undealt.get(i).printCard() + ", ");}
+//		System.out.println();
 		
 		// sort all hands
 		for (Player p : playerOrder) { p.sortHand(); }
-		for (Player p : playerOrder) { p.printHand(); }		// for debugging to check all the hands are valid
+//		for (Player p : playerOrder) { p.printHand(); }		// for debugging to check all the hands are valid
 		cardsPlayed.printDeck();								// for debugging to check all cards have been dealt
 		// pick first player
 		firstPlayer = 0;
 		// print message to say who plays first
-		System.out.println(playerOrder.get(firstPlayer).getName() + " will play first.\n");
+//		System.out.println(playerOrder.get(firstPlayer).getName() + " will play first.\n");
 		// just to be safe, clear the arraylist of cards on the table
 		currentRound.clear();
 		// clear scores for this game
@@ -186,14 +186,25 @@ class Game {
 
 	// Print out how many points each player currently has within this game
 	void printPoints() {
-		System.out.println("Points received this game:");
-		System.out.println("--------------------------");
-		for (int i = 0; i < playerOrder.size(); i++) {
-			System.out.println(playerOrder.get(i).getName() + " has " + playerScores.get(i) + " points.");
-		}
-		System.out.println();
+//		System.out.println("Points received this game:");
+//		System.out.println("--------------------------");
+//		for (int i = 0; i < playerOrder.size(); i++) {
+//			System.out.println(playerOrder.get(i).getName() + " has " + playerScores.get(i) + " points.");
+//		}
+//		System.out.println();
 	}
-
+	int getWinner() {
+		int highestScore = playerOrder.get(0).getPoints();
+		int index = 0;
+		for (int i = 0; i < playerOrder.size(); i++) {
+			if (highestScore < playerOrder.get(i).getPoints()) {
+				index = i;
+				highestScore = playerOrder.get(i).getPoints();
+			}
+		}
+		return index;
+	}
+	
 	// Print the person who is in the lead after this game
 	int printWinner() {
 		int highestScore = playerOrder.get(0).getPoints();
@@ -210,12 +221,12 @@ class Game {
 
 	// Print out how many points each player currently has between all games
 	void printTotalPoints() {
-		System.out.println("Total cumulative points between all games:");
-		System.out.println("------------------------------------------");
-		for (Player p : playerOrder) {
-			System.out.println(p.getName() + " has " + p.getPoints() + " points.");
-		}
-		System.out.println();
+//		System.out.println("Total cumulative points between all games:");
+//		System.out.println("------------------------------------------");
+//		for (Player p : playerOrder) {
+//			System.out.println(p.getName() + " has " + p.getPoints() + " points.");
+//		}
+//		System.out.println();
 	}
 
 	// Rnd-game functionality for zombie army
@@ -343,6 +354,10 @@ class Game {
 				for (int i=0; i < zombieCount.size(); i++) { System.out.println("Player " + (i+1) + " has " 
 						+ zombieCount.get(i) + " zombies."); }
 				System.out.println();			
+			}
+			
+			for(var p:playerOrder) {
+				p.notifyHandOver(playerScores);
 			}
 				
 			if (gameOver()) {

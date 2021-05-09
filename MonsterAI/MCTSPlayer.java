@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 class MCTSNode extends State {
 
 	boolean visited = false;
-	static int targetIndex = 1; // the player index that the hand belong to (the player we want it to win)
+	int targetIndex = 1; // the player index that the hand belong to (the player we want it to win)
 	ArrayList<Card> hand;
 	double totalValue = 0;
 	int numObserved = 0;
@@ -23,9 +23,10 @@ class MCTSNode extends State {
 	Card prevStep = null;
 	ExhaustTable suitExhaustedTable = null;
 
-	MCTSNode(Deck deck, ArrayList<Card> round, ArrayList<Integer> scores, int index, ArrayList<Card> hand, MCTSNode parent) {
+	MCTSNode(Deck deck, ArrayList<Card> round, ArrayList<Integer> scores, int index, ArrayList<Card> hand, MCTSNode parent, int targetIndex) {
 		super(deck, round, scores, index);
 		// TODO Auto-generated constructor stub
+		this.targetIndex= targetIndex;
 		this.hand = new ArrayList<>(hand);
 		this.parent = parent;
 		suitExhaustedTable = new ExhaustTable();
@@ -34,10 +35,11 @@ class MCTSNode extends State {
 		fillPossibleMoves();
 	}
 
-	MCTSNode (State secondCopy, ArrayList<Card> hand, MCTSNode parent) {
+	MCTSNode (State secondCopy, ArrayList<Card> hand, MCTSNode parent, int targetIndex) {
 		super(secondCopy);
 		this.hand = new ArrayList<>(hand);
 		this.parent = parent;
+		this.targetIndex = targetIndex;
 		suitExhaustedTable = new ExhaustTable();
 		updateExhaustTable();
 		rng = ThreadLocalRandom.current();
@@ -49,6 +51,7 @@ class MCTSNode extends State {
 		super(secondCopy);
 		this.hand = new ArrayList<>(secondCopy.hand);
 		this.parent = parent;
+		this.targetIndex = secondCopy.targetIndex;
 		suitExhaustedTable = secondCopy.suitExhaustedTable.deepCopy();
 		updateExhaustTable();
 		rng = ThreadLocalRandom.current();
@@ -318,8 +321,9 @@ public class MCTSPlayer extends Player {
 	public static PrintStream log;
 	public ArrayList<Integer> lastRoundScore;
 	public ExhaustTable lastExhaust = new ExhaustTable();
+	public int targetIndex = 0;
 
-	MCTSPlayer(String id, long timeLimitInMillis) {
+	MCTSPlayer(String id, long timeLimitInMillis, int targetIndex) {
 		super(id);
 		// TODO Auto-generated constructor stub
 		this.timeLimitInMillis = timeLimitInMillis;
@@ -327,6 +331,7 @@ public class MCTSPlayer extends Player {
 		lastRoundScore.add(0);
 		lastRoundScore.add(0);
 		lastRoundScore.add(0);
+		this.targetIndex = targetIndex;
 		try {
 			log = new PrintStream(new File("log/log.txt"));
 		} catch (FileNotFoundException e) {
@@ -368,7 +373,7 @@ public class MCTSPlayer extends Player {
 
 		found: {
 			if (root == null) {
-				root = new MCTSNode(masterCopy, hand, null);
+				root = new MCTSNode(masterCopy, hand, null, targetIndex);
 			} else {
 				for (var c: root.children) {
 					if (c.equals(masterCopy)) {
@@ -382,7 +387,7 @@ public class MCTSPlayer extends Player {
 						}
 					}
 				}
-				root = new MCTSNode(masterCopy, hand, null);
+				root = new MCTSNode(masterCopy, hand, null, targetIndex);
 			}
 		}
 		root.parent = null;

@@ -93,13 +93,15 @@ enum LinearModel {
 
         //Gradient descent: w -= epsilon*gradient
         //Gradient: gradient = x(y-(x*w))/shape_of_y
-        double epsilon = 0.0001;//step size
+    	feature_count++;
+        double epsilon = 1/(feature_count+1);//step size
+        if (epsilon > 1) epsilon = 1;
+        if (epsilon < 0.00001) epsilon = 0.00001;
         double yhat = getStateVectorValue(aStateVector);//get the predicted value
         double difference = yhat - rolloutResult;//get the difference between predicted and result
 
         for(int i = 0; i < aStateVector.size(); i++) {
             this.stateVectorWeights[i] -= epsilon*(aStateVector.get(i)*difference) / FEATURE_NUMBER;
-
         }
         this.bias -= epsilon*difference / FEATURE_NUMBER;
 
@@ -444,6 +446,7 @@ public class MCRLPlayer extends Player {
     public ArrayList<Integer> lastRoundScore;
     public ExhaustTable lastExhaust = new ExhaustTable();
     public LinearModel linearModel;
+    public boolean isTest = false;
     MCRLGameState root = null;
     int targetIndex = 0;
     
@@ -453,11 +456,45 @@ public class MCRLPlayer extends Player {
 
     @Override
 	public void notifyGameOver(int winner) {
+    	if (isTest) return;
     	if (winner==targetIndex) {
     		updateWeights(1);
     	} else {
     		updateWeights(0);
     	}
+    	newVectorSet();
+	}
+    
+	public void notifyHandOver(ArrayList<Integer> playerScores) {
+		if (isTest) return;
+        ArrayList<Double> e = new ArrayList<>();
+        for (int i =0; i<3; i++) {
+            e.add((double)playerScores.get(i).intValue());
+        }
+        double maxV =-10000;
+        double secV =-10000;
+        for (int i = 0; i<3; i++) {
+            if (e.get(i) > secV) {
+                secV = e.get(i);
+                if (maxV < secV) {
+                    double a = secV;
+                    secV = maxV;
+                    maxV = a;
+                }
+            }
+        }
+
+        for (int i=0; i<e.size(); i++) {
+            double reward = 0.8/(maxV - e.get(i) + 1);
+            if (Double.compare(e.get(i), maxV)==0) {
+                reward += 0.02 * (e.get(i) - secV);
+            }
+            if (reward>1.4) reward = 1.4;
+            e.set(i, reward);
+        }
+        updateWeights(e.get(targetIndex));
+        newVectorSet();
+        return;
 	}
 
     
@@ -487,7 +524,7 @@ public class MCRLPlayer extends Player {
         return LinearModel.INSTANCE.getStateVectorValue(afterStateVector);
     }
     
-    public void updateWeights(int reward) {
+    public void updateWeights(double reward) {
         ArrayList<Vector<Integer>> wdwdwindw = new ArrayList<>();
         for(int a = 0; a < seenStates.size(); a++) {
             MCRLGameState state = seenStates.get(a);
@@ -506,12 +543,13 @@ public class MCRLPlayer extends Player {
         newVectorSet();
     }
     
-    MCRLPlayer(String id, long timeLimitInMillis, int playerIndex, LinearModel aLinearModel) {
+    MCRLPlayer(String id, long timeLimitInMillis, int playerIndex, boolean isTest) {
         super(id);
-        linearModel = aLinearModel;
+        linearModel = LinearModel.INSTANCE;
         this.targetIndex = playerIndex;
         // TODO Auto-generated constructor stub
         this.timeLimitInMillis = timeLimitInMillis;
+        this.isTest = isTest;
         lastRoundScore = new ArrayList<>();
         lastRoundScore.add(0);
         lastRoundScore.add(0);

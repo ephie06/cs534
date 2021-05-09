@@ -1,35 +1,55 @@
+import java.io.File;
+import java.io.PrintStream;
+
 public class SingleThreadMonster {
 
     public static void main(String[] args) {
-    	LinearModel.INSTANCE.loadWeightsFromFile("model_1.obj");
+//    	LinearModel.INSTANCE.loadWeightsFromFile("model_1.obj");
 
         long start = System.currentTimeMillis();
         System.out.println("Welcome to Monster");
         //while (System.currentTimeMillis() - start < 1000000000) {
 
-            LinearModel.INSTANCE.loadWeightsFromFile("model_1.obj");
-            System.out.println(LinearModel.INSTANCE);
+//        LinearModel.INSTANCE.loadWeightsFromFile("model_1.obj");
+        System.out.println(LinearModel.INSTANCE);
 
-            // Initalize the deck of cards
-            Deck thing = new Deck();
+        // Initalize the deck of cards
 
-            // Assume this order is clockwise
-            Player p1 = new GDPlayer("GD Player 1");
-            Player p2 = new MCRLPlayer("MCRL", 100, 1, LinearModel.INSTANCE);
-            Player p3 = new GDPlayer("GD Player 3");
+        // Assume this order is clockwise 
 
-            // at the end of every game, we will have all the cards back in the deck
-            // thing.printDeck();
+        // at the end of every game, we will have all the cards back in the deck
+        // thing.printDeck();
 
-            // Play Multiple Games
-            int numberOfGames = 5;
-            Game round = new Game(thing, p1, p2, p3);
-            while (!round.gameOver()) {
-                round.playNewGame();
-                numberOfGames++;
-            }
-            LinearModel.INSTANCE.saveWeightsToFile("model_1.obj");
-        //}
-        //System.out.println(LinearModel.INSTANCE);
-    }
+        // Play Multiple Games
+        PrintStream data;
+        try {
+			new File("log/RL_results/").mkdirs();
+			data = new PrintStream(new File("log/RL_results/" + Thread.currentThread().getId() + ".csv"));
+		} catch (Exception e) {
+			e.printStackTrace();
+			return;
+		}
+        data.println(LinearModel.INSTANCE.toString());
+        
+	     for (int i = 0; i < 20000; i++) {
+	    	 
+	    	 Player p1 = new RandomPlayAI("Random Player 1");
+	    	 Player p2 = new MCRLPlayer("MCRL", 100, 1, false);
+//	    	 Player p2 = new RandomPlayAI("Random Player 2");
+	    	 Player p3 = new RandomPlayAI("Random Player 3");
+
+	    	 Deck thing = new Deck();
+	        Game round = new Game(thing, p1, p2, p3);
+	        round.debug = false;
+	        while (!round.gameOver()) {
+	            round.playNewGame();
+	        }
+	        data.println(round.getWinner());
+	     
+	     }
+	     data.close();
+	     LinearModel.INSTANCE.saveWeightsToFile("model_20000.obj");
+	        //}
+	     System.out.println(LinearModel.INSTANCE);
+	    }
 }
