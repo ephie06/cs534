@@ -143,14 +143,15 @@ enum LinearModel {
 
 class MCRLGameState extends State {
 
-    //Fields not included from MCTS: visited,total value, numObserved, children, parent, prevStep
-
     int targetIndex = 1; // the player index that the hand belong to (the player we want it to win)
     double stateValue = 0;
+	double totalValue = 0;
+	int numObserved = 0;
     ArrayList<Card> hand;
     CopyOnWriteArrayList<Card> possibleActions = new CopyOnWriteArrayList<>();//TODO: Terrible fix, find out how to iterate over actions correctly
     ExhaustTable suitExhaustedTable = null;
     MCRLGameState parent = null;
+	Card prevStep = null;
     ArrayList<MCRLGameState> children = new ArrayList<>();
     boolean inSim = false;
     MCRLPlayer parentPlayer;
@@ -190,6 +191,12 @@ class MCRLGameState extends State {
         return meanValue() + 2 * Math.sqrt(Math.log(parent.numObserved)/numObserved);
     }*/
 
+	public double meanValue() {
+		if (numObserved==0) return 0;
+		return (double)totalValue/numObserved;
+
+	}
+	
     void playCard(Card c, int index) {
         playCard(c);
         if (index == targetIndex) {
@@ -197,7 +204,7 @@ class MCRLGameState extends State {
         }
     }
 
-    ArrayList<Double> terminalValue() {
+    double terminalValue() {
         ArrayList<Double> e = new ArrayList<>();
         for (int i =0; i<3; i++) {
             e.add((double)playerScores.get(i).intValue());
@@ -215,15 +222,11 @@ class MCRLGameState extends State {
             }
         }
 
-        for (int i=0; i<e.size(); i++) {
-            double reward = 0.8/(maxV - e.get(i) + 1);
-            if (Double.compare(e.get(i), maxV)==0) {
-                reward += 0.02 * (e.get(i) - secV);
-            }
-            if (reward>1.4) reward = 1.4;
-            e.set(i, reward);
+        if (e.get(targetIndex) == maxV) {
+        	return maxV - secV;
+        } else {
+        	return e.get(targetIndex) - maxV;
         }
-        return e;
     }
 
     // Given a suit, check if the hand has that suit
@@ -325,6 +328,7 @@ class MCRLGameState extends State {
     }
 
     protected void makeOneMove(Card c) { //TODO: Protected vs Private?
+		prevStep = c;
         playCard(c, this.playerIndex);
         if (validRound()) {
             playerIndex = (playerIndex+1) % playerScores.size();
@@ -375,22 +379,24 @@ class MCRLGameState extends State {
         return newNode;
     }
 
-    void backPropagation(ArrayList<Double> reward) {
-//		if (reward==null) return;
-        //numObserved += 1;
-        if (parent!=null) {
-
-            //TODO: add q(s,a) thing here instead of totalValue
-            //totalValue += reward.get(parent.playerIndex);
-            parent.backPropagation(reward);
-        }
+    //here is for rollout player, so no backpropagation actually, it is only for record the  
+    void backPropagation(double reward) {
+        numObserved += 1;
+        totalValue += reward;
     }
 
-    MCRLGameState simulation(LinearModel linearModel) {
+    MCRLGameState simulation() {
         MCRLGameState temp = new MCRLGameState(this, this, this.parentPlayer);
         temp.inSim = true;
         while(temp.possibleActions.size()!=0) {
-            temp.makeOneMove(temp.bestPossibleAction(linearModel)); //possibleActions already shuffled. TODO: is action selection in sim Ran
+        	if (temp.playerIndex == temp.targetIndex) {
+        		parentPlayer.seenStates.add(new MCRLGameState(temp, temp, parentPlayer));
+        		parentPlayer.actionsTook.add(temp.bestPossibleAction(LinearModel.INSTANCE));
+        		parentPlayer.imme_reward.add(0.0);
+        		temp.makeOneMove(temp.bestPossibleAction(LinearModel.INSTANCE)); //possibleActions already shuffled. TODO: is action selection in sim Ran
+        	} else {
+        		temp.makeOneMove(possibleActions.get(0));
+        	}
         }
         return temp;
     }
@@ -425,6 +431,10 @@ class MCRLGameState extends State {
     Card bestPossibleAction(LinearModel linearModel) {
         Card bestMove = null;
         double highestScore = Double.NEGATIVE_INFINITY;
+        double exploreFactor = 0.1;
+        if (ThreadLocalRandom.current().nextDouble() < exploreFactor) {
+        	return possibleActions.get(0);
+        }
         for(var card : possibleActions) {
             double predictedScore = parentPlayer.makePrediction(card, this); //lookahead to afterstate, choose 'best' afterstate
             if (predictedScore > highestScore) {
@@ -524,12 +534,11 @@ public class MCRLPlayer extends Player {
     }
     
     public void updateWeights() {
-        ArrayList<Vector<Integer>> wdwdwindw = new ArrayList<>();
-        double discountFactor = 0.9;
+        double discountFactor = 1.0;
         for(int a = seenStates.size()-1; a >= 0 ; a--) {
             MCRLGameState aState = seenStates.get(a);
             aState.makeOneMove(actionsTook.get(a));
-            double reward = imme_reward.get(a) + discountFactor * LinearModel.INSTANCE.getStateVectorValue(aState.getStateVector());
+            double reward = (1 - discountFactor)* imme_reward.get(a) + discountFactor * LinearModel.INSTANCE.getStateVectorValue(aState.getStateVector());
             if (a == seenStates.size()-1) {
             	reward = imme_reward.get(a);
             }

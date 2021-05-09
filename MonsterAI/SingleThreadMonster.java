@@ -9,7 +9,7 @@ public class SingleThreadMonster {
         System.out.println("Welcome to Monster");
         //while (System.currentTimeMillis() - start < 1000000000) {
 
-        LinearModel.INSTANCE.loadWeightsFromFile("model_100000.obj");
+        LinearModel.INSTANCE.loadWeightsFromFile("model_200000.obj");
         System.out.println(LinearModel.INSTANCE);
 
         // Initalize the deck of cards
@@ -30,7 +30,7 @@ public class SingleThreadMonster {
 		}
         data.println(LinearModel.INSTANCE.toString());
         
-	     for (int i = 0; i < 100000; i++) {
+	     for (int i = 0; i < 10000; i++) {
 	    	 
 	    	 Player p1 = new RandomPlayAI("f");
 	    	 Player p2 = new MCRLPlayer("MCRL 1", 100, 1, false);
@@ -47,7 +47,7 @@ public class SingleThreadMonster {
 	     
 	     }
 	     data.close();
-	     LinearModel.INSTANCE.saveWeightsToFile("model_200000.obj");
+	     LinearModel.INSTANCE.saveWeightsToFile("model_210000.obj");
 	        //}
 	     System.out.println(LinearModel.INSTANCE);
 	    }

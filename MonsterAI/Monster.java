@@ -70,11 +70,12 @@ public class Monster {
 			for (int i=0; i<times; i++) {
 				Game g = oneMatch();
 				if (g!=null) {
-					data.printf("%d, %d, %d, %s\n",
+					data.printf("%d, %d, %d, %d, %d\n",
 							g.playerOrder.get(0).getPoints(),
 							g.playerOrder.get(1).getPoints(),
 							g.playerOrder.get(2).getPoints(),
-							g.printWinner());
+							g.printWinner(),
+							g.playerOrder.get(1).getPoints() - Math.max(g.playerOrder.get(0).getPoints(), g.playerOrder.get(2).getPoints()));
 				}
 			}
 
