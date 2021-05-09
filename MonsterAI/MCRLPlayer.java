@@ -45,6 +45,7 @@ enum LinearModel {
     		FileOutputStream fos = new FileOutputStream(filepath);
     		ObjectOutputStream oos = new ObjectOutputStream(fos);
     		oos.writeObject(this.stateVectorWeights);
+            oos.writeObject(this.bias);
     		oos.writeObject(this.feature_count);
     		oos.close();
     		fos.close();
@@ -60,6 +61,7 @@ enum LinearModel {
 			ObjectInputStream ois = new ObjectInputStream(fis);
 	
 	        this.stateVectorWeights = (double[]) ois.readObject();
+            this.bias = (double) ois.readObject();
 	        this.feature_count = (int) ois.readObject();
 	        ois.close();
 		    fis.close();
