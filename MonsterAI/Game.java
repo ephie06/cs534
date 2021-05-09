@@ -221,12 +221,13 @@ class Game {
 
 	// Print out how many points each player currently has between all games
 	void printTotalPoints() {
-//		System.out.println("Total cumulative points between all games:");
-//		System.out.println("------------------------------------------");
-//		for (Player p : playerOrder) {
-//			System.out.println(p.getName() + " has " + p.getPoints() + " points.");
-//		}
-//		System.out.println();
+		if (!debug) return;
+		System.out.println("Total cumulative points between all games:");
+		System.out.println("------------------------------------------");
+		for (Player p : playerOrder) {
+			System.out.println(p.getName() + " has " + p.getPoints() + " points.");
+		}
+		System.out.println();
 	}
 
 	// Rnd-game functionality for zombie army

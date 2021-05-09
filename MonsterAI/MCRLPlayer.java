@@ -153,7 +153,6 @@ class MCRLGameState extends State {
     MCRLGameState parent = null;
 	Card prevStep = null;
     ArrayList<MCRLGameState> children = new ArrayList<>();
-    boolean inSim = false;
     MCRLPlayer parentPlayer;
 
 
@@ -287,7 +286,7 @@ class MCRLGameState extends State {
         } else {
             possibleActions = cardsPlayed.invertDeck.stream().filter(i->!hand.contains(i)).collect(Collectors.toCollection(CopyOnWriteArrayList::new));
 
-            if (inSim && firstSuit!=null && suitExhaustedTable.get(firstSuit)[playerIndex]==false) {
+            if (firstSuit!=null && suitExhaustedTable.get(firstSuit)[playerIndex]==false) {
                 List<Card> thisSuit = possibleActions.stream().filter(i->(i.getSuit()==firstSuit)).collect(Collectors.toList());
                 //With a probability calculated by size of 'hand', 'thisSuit' and 'possibleActions', we filter the possibleActions with the suit.
                 int suitCount = thisSuit.size();
@@ -387,7 +386,6 @@ class MCRLGameState extends State {
 
     MCRLGameState simulation() {
         MCRLGameState temp = new MCRLGameState(this, this, this.parentPlayer);
-        temp.inSim = true;
         while(temp.possibleActions.size()!=0) {
         	if (temp.playerIndex == temp.targetIndex) {
         		parentPlayer.seenStates.add(new MCRLGameState(temp, temp, parentPlayer));
@@ -467,6 +465,7 @@ public class MCRLPlayer extends Player {
     @Override
 	public void notifyGameOver(int winner) {
     	if (isTest) return;
+    	if (imme_reward.size()==0) return;
     	if (winner == targetIndex) {
     		imme_reward.set(imme_reward.size()-1, 100.0);
     	} else {
@@ -477,6 +476,7 @@ public class MCRLPlayer extends Player {
     
 	public void notifyHandOver(ArrayList<Integer> playerScores) {
 		if (isTest) return;
+		if (imme_reward.size()==0) return;
         ArrayList<Double> e = new ArrayList<>();
         for (int i =0; i<3; i++) {
             e.add((double)playerScores.get(i).intValue());
@@ -522,7 +522,7 @@ public class MCRLPlayer extends Player {
     public double makePrediction(Card move, MCRLGameState state) {
 
         //TODO: Call makeOneMove fcn from NewRolloutPlayer/MCTSPlayer (inputting parameter move)
-        MCRLGameState afterState = state;
+        MCRLGameState afterState = new MCRLGameState(state, state, state.parentPlayer);
         afterState.makeOneMove(move);
         Vector<Integer> afterStateVector = afterState.getStateVector();
         //TODO: Simulation call was here, but stateVector values should represent what occurs at end of game

@@ -30,16 +30,16 @@ public class SingleThreadMonster {
 		}
         data.println(LinearModel.INSTANCE.toString());
         
-	     for (int i = 0; i < 10000; i++) {
+	     for (int i = 0; i < 10; i++) {
 	    	 
 	    	 Player p1 = new RandomPlayAI("f");
-	    	 Player p2 = new MCRLPlayer("MCRL 1", 100, 1, false);
+	    	 Player p2 = new RLRolloutPlayer("MCRL 1", 1000, 1, false);
 //	    	 Player p2 = new RandomPlayAI("Random Player 2");
 	    	 Player p3 = new RandomPlayAI("h");
 
-	    	 Deck thing = new Deck();
+	    	Deck thing = new Deck();
 	        Game round = new Game(thing, p1, p2, p3);
-	        round.debug = false;
+	        round.debug = true;
 	        while (!round.gameOver()) {
 	            round.playNewGame();
 	        }

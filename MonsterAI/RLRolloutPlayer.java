@@ -79,7 +79,7 @@ public class RLRolloutPlayer extends MCRLPlayer {
         long start = System.currentTimeMillis();
 
         //Dynamic Time based on how many child nodes exist
-        while ((System.currentTimeMillis() - start < root.children.size()* 100L) && (root.children.size() > 1)) {
+        while ((System.currentTimeMillis() - start < timeLimitInMillis) && (root.children.size() > 1)) {
             int randNode = (int) (root.children.size() * Math.random());
             var rewards = root.children.get(randNode).simulation();
             OnOneSimulationDone(rewards.playerScores);
