@@ -313,7 +313,13 @@ class Game {
 			// 1. findTaker() will update who took the cards this round
 			// 2. calculatePoints() will calculate how many points this round consisted of
 			// 3. addPoints() will add those points to the correct player
+			int oldFirstPlayer = firstPlayer;
 			firstPlayer = findTaker(firstPlayer);
+			ArrayList<Integer> rewards = new ArrayList<>();
+			for (int j=0; j<3; j++) {
+				rewards.add(-playerOrder.get(j).points);
+			}
+			
 			int points = calculatePoints();
 			playerScores.set(firstPlayer,playerScores.get(firstPlayer)+points);
 			playerOrder.get(firstPlayer).addPoints(points);
@@ -321,6 +327,16 @@ class Game {
 			int zombies = countZombies(currentRound);
 			zombieCount.set(firstPlayer, zombieCount.get(firstPlayer)+zombies);
 			if (!zArmy) { zombieArmy(); }
+			int thisScore = playerScores.get(firstPlayer);
+			
+			for (int j=0; j<3; j++) {
+				rewards.set(j, rewards.get(j) + playerOrder.get(j).points);
+			}
+			
+			for (int j=0; j<3; j++) {
+				playerOrder.get(j).notifyRound(currentRound, oldFirstPlayer, rewards);
+			}
+			
 			
 			if (debug) {
 				System.out.println("\n" + playerOrder.get(firstPlayer).getName() + " played the highest card "

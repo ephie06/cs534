@@ -95,8 +95,7 @@ enum LinearModel {
         //Gradient: gradient = x(y-(x*w))/shape_of_y
     	feature_count++;
         double epsilon = 1/(feature_count+1);//step size
-        if (epsilon > 1) epsilon = 1;
-        if (epsilon < 0.00001) epsilon = 0.00001;
+        if (epsilon < 0.0001) epsilon = 0.0001;
         double yhat = getStateVectorValue(aStateVector);//get the predicted value
         double difference = yhat - rolloutResult;//get the difference between predicted and result
 
@@ -452,17 +451,18 @@ public class MCRLPlayer extends Player {
     
     public ArrayList<MCRLGameState> seenStates;
     public ArrayList<Card> actionsTook;
+    public ArrayList<Double> imme_reward;
     //public ArrayList<Vector<Integer>> statesVisited;
 
     @Override
 	public void notifyGameOver(int winner) {
     	if (isTest) return;
-    	if (winner==targetIndex) {
-    		updateWeights(1);
+    	if (winner == targetIndex) {
+    		imme_reward.set(imme_reward.size()-1, 100.0);
     	} else {
-    		updateWeights(0);
+    		imme_reward.set(imme_reward.size()-1, -100.0);
     	}
-    	newVectorSet();
+		updateWeights();
 	}
     
 	public void notifyHandOver(ArrayList<Integer> playerScores) {
@@ -484,16 +484,14 @@ public class MCRLPlayer extends Player {
             }
         }
 
-        for (int i=0; i<e.size(); i++) {
-            double reward = 0.8/(maxV - e.get(i) + 1);
-            if (Double.compare(e.get(i), maxV)==0) {
-                reward += 0.02 * (e.get(i) - secV);
-            }
-            if (reward>1.4) reward = 1.4;
-            e.set(i, reward);
+        double terminalReward = 0;
+        if (e.get(targetIndex) == maxV) {
+        	terminalReward = maxV - secV;
+        } else {
+        	terminalReward = e.get(targetIndex) - maxV;
         }
-        updateWeights(e.get(targetIndex));
-        newVectorSet();
+        imme_reward.set(imme_reward.size()-1, terminalReward);
+        updateWeights();
         return;
 	}
 
@@ -501,6 +499,7 @@ public class MCRLPlayer extends Player {
     void newVectorSet() {
         seenStates = new ArrayList<>();
         actionsTook = new ArrayList<>();
+        imme_reward = new ArrayList<>();
         //statesVisited = new ArrayList<>();
     }
     
@@ -524,22 +523,20 @@ public class MCRLPlayer extends Player {
         return LinearModel.INSTANCE.getStateVectorValue(afterStateVector);
     }
     
-    public void updateWeights(double reward) {
+    public void updateWeights() {
         ArrayList<Vector<Integer>> wdwdwindw = new ArrayList<>();
-        for(int a = 0; a < seenStates.size(); a++) {
-            MCRLGameState state = seenStates.get(a);
-            state.makeOneMove(actionsTook.get(a));
-            wdwdwindw.add(state.getStateVector());
+        double discountFactor = 0.9;
+        for(int a = seenStates.size()-1; a >= 0 ; a--) {
+            MCRLGameState aState = seenStates.get(a);
+            aState.makeOneMove(actionsTook.get(a));
+            double reward = imme_reward.get(a) + discountFactor * LinearModel.INSTANCE.getStateVectorValue(aState.getStateVector());
+            if (a == seenStates.size()-1) {
+            	reward = imme_reward.get(a);
+            }
+            if (imme_reward.get(a)==0) continue;
+        	LinearModel.INSTANCE.updateWeightsSingle(seenStates.get(a).getStateVector(), reward);
         }
-//
-//        MCRLGameState lastState = seenStates.get(seenStates.size() - 1);
-//        lastState.makeOneMove(actionsTook.get(actionsTook.size() - 1));
-//        Vector<Integer> rolloutResult = lastState.getStateVector();
 
-        for(var stateVector : seenStates) {
-//        	LinearModel.INSTANCE.updateWeightsSingle(stateVector, LinearModel.INSTANCE.getStateVectorValue(rolloutResult));
-        	LinearModel.INSTANCE.updateWeightsSingle(stateVector.getStateVector(), reward);
-        }
         newVectorSet();
     }
     
@@ -569,7 +566,7 @@ public class MCRLPlayer extends Player {
     }
 
     @Override
-    public void notifyRound(ArrayList<Card> currentRound, int firstPlayer) {
+    public void notifyRound(ArrayList<Card> currentRound, int firstPlayer, ArrayList<Integer> rewards) {
         if (currentRound.size()>1) {
             Suit firstSuit = getFirstSuit(currentRound);
             for (int i=1; i<currentRound.size(); i++) {
@@ -578,6 +575,8 @@ public class MCRLPlayer extends Player {
                 }
             }
         }
+        
+        imme_reward.add((double)rewards.get(targetIndex).intValue());
     };
 
     @Override

@@ -60,8 +60,8 @@ public class Monster {
 		public void run()
 		{
 			try {
-				new File("log/gd_accu/").mkdirs();
-				data = new PrintStream(new File("log/gd_accu/" + Thread.currentThread().getId() + ".csv"));
+				new File("log/rd_rl/").mkdirs();
+				data = new PrintStream(new File("log/rd_rl/" + Thread.currentThread().getId() + ".csv"));
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -83,9 +83,9 @@ public class Monster {
 	}
 
 	public static void main(String[] args) throws InterruptedException {
-
+        LinearModel.INSTANCE.loadWeightsFromFile("model_40000.obj");
 		int n = 1; // Number of threads
-		MultithreadingDemo object = new MultithreadingDemo(1);
+		MultithreadingDemo object = new MultithreadingDemo(100);
 		for (int i = 0; i < n; i++) {
 			object.start();
 			object.join();//TODO: May have to delete when running multiple threads

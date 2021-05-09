@@ -98,7 +98,7 @@ abstract class Player {
 	// Or false if you want it to just play through
 	abstract boolean setDebug();
 	
-	public void notifyRound(ArrayList<Card> currentRound, int firstPlayer) {
+	public void notifyRound(ArrayList<Card> currentRound, int firstPlayer, ArrayList<Integer> rewards) {
 		return;
 	}
 	
