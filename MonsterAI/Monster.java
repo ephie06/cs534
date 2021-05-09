@@ -1,5 +1,6 @@
 import java.io.File;
 import java.io.PrintStream;
+import java.util.ArrayList;
 
 public class Monster {
 
@@ -23,9 +24,9 @@ public class Monster {
 				Deck thing = new Deck();
 
 				// Assume this order is clockwise
-				Player p1 = new RandomPlayAI("random");
+				Player p1 = new RandomPlayAI("m");
 				Player p2 = new MCRLPlayer("MCRL", 100, 1, true);
-				Player p3 = new RandomPlayAI("random");
+				Player p3 = new RandomPlayAI("om");
 
 				// at the end of every
 				// game, we will have all the cards back in the deck
@@ -83,15 +84,20 @@ public class Monster {
 	}
 
 	public static void main(String[] args) throws InterruptedException {
-        LinearModel.INSTANCE.loadWeightsFromFile("model_40000.obj");
-		int n = 1; // Number of threads
-		MultithreadingDemo object = new MultithreadingDemo(100);
+        LinearModel.INSTANCE.loadWeightsFromFile("model_200000.obj");
+		int n = 10; // Number of threads
+		ArrayList<MultithreadingDemo> ths = new ArrayList<>();
 		for (int i = 0; i < n; i++) {
+			MultithreadingDemo object = new MultithreadingDemo(20000);
 			object.start();
-			object.join();//TODO: May have to delete when running multiple threads
+			ths.add(object);
 		}
-		System.out.println(object.linearModel.toString());
-
+		for (var t:ths) {
+			t.join();
+		}
+		
+		System.out.println(LinearModel.INSTANCE.toString());
+		LinearModel.INSTANCE.saveWeightsToFile("model_400000.obj");
 /*		System.out.println("Welcome to Monster");
 
 		// Initalize the deck of cards

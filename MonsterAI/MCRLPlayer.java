@@ -40,7 +40,7 @@ enum LinearModel {
         this.bias = random.nextDouble();
     }
 
-    void saveWeightsToFile(String filepath) {
+    synchronized void saveWeightsToFile(String filepath) {
     	try {
     		FileOutputStream fos = new FileOutputStream(filepath);
     		ObjectOutputStream oos = new ObjectOutputStream(fos);
@@ -54,7 +54,7 @@ enum LinearModel {
     	}
     }
     
-    void loadWeightsFromFile(String filepath) {
+    synchronized void loadWeightsFromFile(String filepath) {
 		try {
 			FileInputStream fis;
 			fis = new FileInputStream(filepath);
@@ -73,7 +73,7 @@ enum LinearModel {
     }
    
 
-    double getStateVectorValue(Vector<Integer> aStateVector) {
+    synchronized double getStateVectorValue(Vector<Integer> aStateVector) {
         double ret = 0;
         for(int i = 0; i < aStateVector.size(); i++) {
             ret+= aStateVector.get(i) * this.stateVectorWeights[i];
@@ -89,7 +89,7 @@ enum LinearModel {
      * @param aStateVector - how our AI thought the game would end up
      * @param rolloutResult - the rollout result(how good the game ended up)(exp from above. our actual score)
      */
-    public void updateWeightsSingle(Vector<Integer> aStateVector, double rolloutResult) {
+    synchronized public void updateWeightsSingle(Vector<Integer> aStateVector, double rolloutResult) {
 
         //Gradient descent: w -= epsilon*gradient
         //Gradient: gradient = x(y-(x*w))/shape_of_y
@@ -106,7 +106,7 @@ enum LinearModel {
 
     }
 
-    public String toString() {
+    synchronized public String toString() {
         int currentWeightPrinted = 0;
         String[] whatMatrix = new String[]{"playerMatrix", "cardsPlayedMatrix"};
         String[] matriceWeightNames = new String[]{"UNICORNS - numCardsOfSuit", "UNICORNS - meanOfCards",
