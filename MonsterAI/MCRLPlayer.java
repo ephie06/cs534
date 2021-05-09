@@ -28,7 +28,7 @@ enum LinearModel {
     
     private int feature_count; // how many states are learned by this model. We need this to track the model between different runs. 
 
-    private static final int FEATURE_NUMBER = 28;
+    private static final int FEATURE_NUMBER = 29;
 
 
     /**
@@ -36,7 +36,7 @@ enum LinearModel {
      */
     private LinearModel() {
         Random random = new Random();
-        stateVectorWeights  = DoubleStream.generate(() -> random.nextDouble()).limit(27).toArray();
+        stateVectorWeights  = DoubleStream.generate(() -> random.nextDouble()).limit(28).toArray();
         this.bias = random.nextDouble();
     }
 
@@ -129,7 +129,9 @@ enum LinearModel {
         }
         s.append("\ncanBeat: " + stateVectorWeights[currentWeightPrinted++]);
 
-        s.append("\nleadingBy: " + stateVectorWeights[currentWeightPrinted]);
+        s.append("\nleadingBy: " + stateVectorWeights[currentWeightPrinted++]);
+
+        s.append("\nNumberOfZombies: " + stateVectorWeights[currentWeightPrinted]);
 
         s.append("\n\nBias: " + bias);
 

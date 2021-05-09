@@ -1,6 +1,7 @@
 
 import java.util.ArrayList;
 import java.util.Vector;
+import java.util.stream.Stream;
 
 public class StateVector {
 
@@ -88,6 +89,8 @@ public class StateVector {
 		stateRep.add(leadingBy());
 
 
+		int zombieCount = (int) cardsPlayed.allCards.stream().filter(i -> i.getSuit() == Suit.ZOMBIES).count();
+		stateRep.add(zombieCount);
 
 	}
 
