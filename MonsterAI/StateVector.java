@@ -23,7 +23,7 @@ public class StateVector {
 	ArrayList<Card> 	currentRound;
 	ArrayList<Integer> 	playerScores;
 	int 				playerIndex;
-	static int 			targetIndex = 1;
+	int 				targetIndex = 1;
 	ArrayList<Card> 	hand;
 	ExhaustTable 		suitExhaustedTable = null;
 	int 				trickPoints;
@@ -41,8 +41,9 @@ public class StateVector {
 		hand = state.hand;
 		suitExhaustedTable = state.suitExhaustedTable;
 		trickPoints = state.calculatePoints();
-		exhausts = suitExhaustedTable.toVector();
 		playerScores = state.playerScores;
+		targetIndex = state.targetIndex;
+		exhausts = suitExhaustedTable.toVector(targetIndex);
 //		this.roundNumber = state.getRoundNumber();
 
 		highCardTrick();
@@ -132,9 +133,23 @@ public class StateVector {
 	}
 
 	int leadingBy() {
-		int rlScore = playerScores.get(1);
-		int high = Math.max(playerScores.get(0), playerScores.get(2));
-		return rlScore - high;
+		int maxV =-10000;
+		int secV =-10000;
+		for (int i = 0; i<3; i++) {
+			if (playerScores.get(i) > secV) {
+				secV = playerScores.get(i);
+				if (maxV < secV) {
+					int a = secV;
+					secV = maxV;
+					maxV = a;
+				}
+			}
+		}
+		if (playerScores.get(targetIndex) == maxV) {
+			return playerScores.get(targetIndex) - secV;
+		} else {
+			return maxV - playerScores.get(targetIndex);
+		}
 	}
 
 

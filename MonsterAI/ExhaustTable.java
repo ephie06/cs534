@@ -57,11 +57,20 @@ public class ExhaustTable extends HashMap<Suit, boolean[]> {
         return sb.toString();
     }
     
-    Vector<Integer> toVector() {
+    Vector<Integer> toVector(int targetIndex) {
 		Vector<Integer> exhausts = new Vector<Integer>();
+		int[] pp = null;
+		if (targetIndex == 0) {
+			pp = new int[] {1, 2};
+		} else if (targetIndex == 1) {
+			pp = new int[] {0, 2};
+		} else  if (targetIndex == 2) {
+			pp = new int[] {0, 1};
+		}
+		
 		for(Suit key: keySet()) {
-			boolean p1 = this.get(key)[0];
-			boolean p3 = this.get(key)[2];
+			boolean p1 = this.get(key)[pp[0]];
+			boolean p3 = this.get(key)[pp[1]];
 			if (p1 == true) exhausts.add(1);
 				else exhausts.add(0);
 			if (p3 == true) exhausts.add(1);
