@@ -430,6 +430,9 @@ class MCRLGameState extends State {
         Card bestMove = null;
         double highestScore = Double.NEGATIVE_INFINITY;
         double exploreFactor = 0.1;
+        if (this.parentPlayer.isTest) {
+        	exploreFactor = 0.0;
+        }
         if (ThreadLocalRandom.current().nextDouble() < exploreFactor) {
         	return possibleActions.get(0);
         }
