@@ -89,11 +89,11 @@ public class Monster {
 	}
 
 	public static void main(String[] args) throws InterruptedException {
-        LinearModel.INSTANCE.loadWeightsFromFile("model_rollout_100.obj");
+        LinearModel.INSTANCE.loadWeightsFromFile("model_rollout_300.obj");
 		int n = 10; // Number of threads
 		ArrayList<MultithreadingDemo> ths = new ArrayList<>();
 		for (int i = 0; i < n; i++) {
-			MultithreadingDemo object = new MultithreadingDemo(20);
+			MultithreadingDemo object = new MultithreadingDemo(30);
 			object.start();
 			ths.add(object);
 		}
@@ -102,7 +102,7 @@ public class Monster {
 		}
 		
 		System.out.println(LinearModel.INSTANCE.toString());
-		LinearModel.INSTANCE.saveWeightsToFile("model_rollout_300.obj");
+		LinearModel.INSTANCE.saveWeightsToFile("model_rollout_600.obj");
 /*		System.out.println("Welcome to Monster");
 
 		// Initalize the deck of cards

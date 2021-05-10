@@ -94,8 +94,9 @@ enum LinearModel {
         //Gradient descent: w -= epsilon*gradient
         //Gradient: gradient = x(y-(x*w))/shape_of_y
     	feature_count++;
+    	if (feature_count > 2147483640) feature_count--;
         double epsilon = 1.0/(feature_count+1);//step size
-        if (epsilon < 0.00001) epsilon = 0.00001;
+        if (epsilon < 0.0000001) epsilon = 0.0000001;
         double yhat = getStateVectorValue(aStateVector);//get the predicted value
         double difference = yhat - rolloutResult;//get the difference between predicted and result
 
@@ -429,7 +430,7 @@ class MCRLGameState extends State {
     Card bestPossibleAction(LinearModel linearModel) {
         Card bestMove = null;
         double highestScore = Double.NEGATIVE_INFINITY;
-        double exploreFactor = 0.1;
+        double exploreFactor = 0.2;
         if (this.parentPlayer.isTest) {
         	exploreFactor = 0.0;
         }
