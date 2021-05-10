@@ -94,8 +94,8 @@ enum LinearModel {
         //Gradient descent: w -= epsilon*gradient
         //Gradient: gradient = x(y-(x*w))/shape_of_y
     	feature_count++;
-        double epsilon = 1/(feature_count+1);//step size
-        if (epsilon < 0.0001) epsilon = 0.0001;
+        double epsilon = 1.0/(feature_count+1);//step size
+        if (epsilon < 0.00001) epsilon = 0.00001;
         double yhat = getStateVectorValue(aStateVector);//get the predicted value
         double difference = yhat - rolloutResult;//get the difference between predicted and result
 
@@ -537,16 +537,18 @@ public class MCRLPlayer extends Player {
     }
     
     public void updateWeights() {
-        double discountFactor = 1.0;
+//        double discountFactor = 1.0;
+        double lastReward = 0.0;
         for(int a = seenStates.size()-1; a >= 0 ; a--) {
             MCRLGameState aState = seenStates.get(a);
             aState.makeOneMove(actionsTook.get(a));
-            double reward = (1 - discountFactor)* imme_reward.get(a) + discountFactor * LinearModel.INSTANCE.getStateVectorValue(aState.getStateVector());
+//            double reward = (1 - discountFactor)* imme_reward.get(a) + discountFactor * LinearModel.INSTANCE.getStateVectorValue(aState.getStateVector());
+            double reward = lastReward;
             if (a == seenStates.size()-1) {
             	reward = imme_reward.get(a);
             }
-            if (imme_reward.get(a)==0) continue;
         	LinearModel.INSTANCE.updateWeightsSingle(seenStates.get(a).getStateVector(), reward);
+        	lastReward = reward;
         }
 
         newVectorSet();

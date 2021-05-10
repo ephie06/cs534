@@ -24,9 +24,13 @@ public class Monster {
 				Deck thing = new Deck();
 
 				// Assume this order is clockwise
-				Player p1 = new RLRolloutPlayer("Roll1", 500, 0, false);
-				Player p2 = new RLRolloutPlayer("Roll2", 500, 1, false);
-				Player p3 = new RLRolloutPlayer("Roll3", 500, 2, false);
+//				Player p1 = new RandomPlayAI("R1");
+//				Player p2 = new RLRolloutPlayer("Roll1", 1000, 1, true);
+//				Player p3 = new RandomPlayAI("R3");
+				
+				Player p1 = new RLRolloutPlayer("Roll0", 500, 0 ,false);
+				Player p2 = new RLRolloutPlayer("Roll1", 500, 1, false);
+				Player p3 = new RLRolloutPlayer("Roll2", 500, 2, false);
 
 				// at the end of every
 				// game, we will have all the cards back in the deck
@@ -61,8 +65,8 @@ public class Monster {
 		public void run()
 		{
 			try {
-				new File("log/rd_rl/").mkdirs();
-				data = new PrintStream(new File("log/rd_rl/" + Thread.currentThread().getId() + ".csv"));
+				new File("log/temp/").mkdirs();
+				data = new PrintStream(new File("log/temp/" + Thread.currentThread().getId() + ".csv"));
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -85,11 +89,11 @@ public class Monster {
 	}
 
 	public static void main(String[] args) throws InterruptedException {
-//        LinearModel.INSTANCE.loadWeightsFromFile("model_200000.obj");
+        LinearModel.INSTANCE.loadWeightsFromFile("model_rollout_100.obj");
 		int n = 10; // Number of threads
 		ArrayList<MultithreadingDemo> ths = new ArrayList<>();
 		for (int i = 0; i < n; i++) {
-			MultithreadingDemo object = new MultithreadingDemo(10);
+			MultithreadingDemo object = new MultithreadingDemo(20);
 			object.start();
 			ths.add(object);
 		}
@@ -98,7 +102,7 @@ public class Monster {
 		}
 		
 		System.out.println(LinearModel.INSTANCE.toString());
-		LinearModel.INSTANCE.saveWeightsToFile("model_rollout_100.obj");
+		LinearModel.INSTANCE.saveWeightsToFile("model_rollout_300.obj");
 /*		System.out.println("Welcome to Monster");
 
 		// Initalize the deck of cards
