@@ -20,14 +20,16 @@ class RolloutNode extends State {
         super(deck, round, scores, index);
         // TODO Auto-generated constructor stub
         this.hand = new ArrayList<>(hand);
+        this.targetIndex = index;
         this.parent = parent;
         rng = ThreadLocalRandom.current();
         fillPossibleMoves();
     }
 
-    RolloutNode (State secondCopy, ArrayList<Card> hand, RolloutNode parent) {
+    RolloutNode (State secondCopy, ArrayList<Card> hand, int target,RolloutNode parent) {
         super(secondCopy);
         this.hand = new ArrayList<>(hand);
+        this.targetIndex = target;
         //this.targetIndex = playerIndex; //TODO: Comment out
         this.parent = parent;
         rng = ThreadLocalRandom.current();
@@ -40,6 +42,7 @@ class RolloutNode extends State {
         this.hand = new ArrayList<>(secondCopy.hand);
         //this.targetIndex = playerIndex; //TODO: Comment out
         this.parent = parent;
+        this.targetIndex = secondCopy.targetIndex;
         rng = ThreadLocalRandom.current();
         fillPossibleMoves();
     }
@@ -57,8 +60,31 @@ class RolloutNode extends State {
         }
     }
 
-    ArrayList<Integer> terminalValue() { //TODO: USE
-        return playerScores;
+    int terminalValue() { //TODO: USE
+        ArrayList<Integer> e = new ArrayList<>();
+        for (int i =0; i<3; i++) {
+            e.add(playerScores.get(i).intValue());
+        }
+        int maxV =-10000;
+        int secV =-10000;
+        for (int i = 0; i<3; i++) {
+            if (e.get(i) > secV) {
+                secV = e.get(i);
+                if (maxV < secV) {
+                    int a = secV;
+                    secV = maxV;
+                    maxV = a;
+                }
+            }
+        }
+
+        int terminalReward = 0;
+        if (e.get(targetIndex) == maxV) {
+        	terminalReward = maxV - secV;
+        } else {
+        	terminalReward = e.get(targetIndex) - maxV;
+        }
+        return terminalReward;
     }
 
     // Given a suit, check if the hand has that suit
@@ -157,16 +183,12 @@ class RolloutNode extends State {
         children.add(newNode);
     }
 
-    void backPropagation(ArrayList<Integer> reward) {
-        RolloutNode no = this;
-        while (no != null) {
-            no.numObserved++;
-            no.totalValue += reward.get(playerIndex) - Collections.max(reward);
-            no = no.parent;
-        }
+    void backPropagation(int reward) {
+        this.numObserved++;
+        this.totalValue += reward;
     }
 
-    ArrayList<Integer> simulation() {
+    int simulation() {
         RolloutNode temp = new RolloutNode(this, this);
         while(temp.possibleMoves.size()!=0) {
             temp.makeOneMove(temp.possibleMoves.get(0)); //possibleMoves already shuffled.
@@ -192,9 +214,11 @@ class RolloutNode extends State {
 public class NewRolloutPlayer extends Player {
 
     public long timeLimitInMillis = 1000;
+    int targetIndex = 1;
 
-    NewRolloutPlayer(String id, long timeLimitInMillis) {
+    NewRolloutPlayer(String id, long timeLimitInMillis, int target) {
         super(id);
+        targetIndex = target;
         // TODO Auto-generated constructor stub
         this.timeLimitInMillis = timeLimitInMillis;
     }
@@ -211,7 +235,7 @@ public class NewRolloutPlayer extends Player {
 
         found: {
             if (root == null) {
-                root = new RolloutNode(masterCopy, hand, null);
+                root = new RolloutNode(masterCopy, hand, targetIndex, null);
             } else {
                 for (var c: root.children) {
                     if (c.equals(masterCopy)) {
@@ -225,7 +249,7 @@ public class NewRolloutPlayer extends Player {
                         }
                     }
                 }
-                root = new RolloutNode(masterCopy, hand, null);
+                root = new RolloutNode(masterCopy, hand, targetIndex, null);
             }
         }
         root.parent = null;
@@ -239,7 +263,7 @@ public class NewRolloutPlayer extends Player {
         long start = System.currentTimeMillis();
 
         //Dynamic Time based on how many child nodes exist
-        while ((System.currentTimeMillis() - start < root.children.size()* 100L) && (root.children.size() > 1)) {
+        while ((System.currentTimeMillis() - start < timeLimitInMillis) && (root.children.size() > 1)) {
             //var tNode = root.selection();
             int randNode = (int) (root.children.size() * Math.random());
             var rewards = root.children.get(randNode).simulation();
